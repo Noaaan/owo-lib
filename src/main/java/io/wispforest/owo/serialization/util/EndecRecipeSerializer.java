@@ -4,9 +4,9 @@ import com.mojang.serialization.Codec;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
 import io.wispforest.owo.serialization.StructEndec;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 
 public abstract class EndecRecipeSerializer<R extends Recipe<?>> implements RecipeSerializer<R> {
 
@@ -30,12 +30,12 @@ public abstract class EndecRecipeSerializer<R extends Recipe<?>> implements Reci
     }
 
     @Override
-    public R read(PacketByteBuf buf) {
+    public R fromNetwork(FriendlyByteBuf buf) {
         return buf.read(this.networkEndec);
     }
 
     @Override
-    public void write(PacketByteBuf buf, R recipe) {
+    public void toNetwork(FriendlyByteBuf buf, R recipe) {
         buf.write(this.networkEndec, recipe);
     }
 }

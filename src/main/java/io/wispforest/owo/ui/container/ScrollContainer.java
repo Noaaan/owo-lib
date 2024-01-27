@@ -1,31 +1,32 @@
 package io.wispforest.owo.ui.container;
 
+
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIModelParsingException;
 import io.wispforest.owo.ui.parsing.UIParsing;
 import io.wispforest.owo.ui.util.Delta;
 import io.wispforest.owo.ui.util.NinePatchTexture;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 import org.lwjgl.glfw.GLFW;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 public class ScrollContainer<C extends Component> extends WrappingParentComponent<C> {
 
-    public static final Identifier VERTICAL_VANILLA_SCROLLBAR_TEXTURE = new Identifier("owo", "scrollbar/vanilla_vertical");
-    public static final Identifier DISABLED_VERTICAL_VANILLA_SCROLLBAR_TEXTURE = new Identifier("owo", "scrollbar/vanilla_vertical_disabled");
-    public static final Identifier HORIZONTAL_VANILLA_SCROLLBAR_TEXTURE = new Identifier("owo", "scrollbar/vanilla_horizontal_disabled");
-    public static final Identifier DISABLED_HORIZONTAL_VANILLA_SCROLLBAR_TEXTURE = new Identifier("owo", "scrollbar/vanilla_horizontal_disabled");
-    public static final Identifier VANILLA_SCROLLBAR_TRACK_TEXTURE = new Identifier("owo", "scrollbar/track");
-    public static final Identifier FLAT_VANILLA_SCROLLBAR_TEXTURE = new Identifier("owo", "scrollbar/vanilla_flat");
+    public static final ResourceLocation VERTICAL_VANILLA_SCROLLBAR_TEXTURE = new ResourceLocation("owo", "scrollbar/vanilla_vertical");
+    public static final ResourceLocation DISABLED_VERTICAL_VANILLA_SCROLLBAR_TEXTURE = new ResourceLocation("owo", "scrollbar/vanilla_vertical_disabled");
+    public static final ResourceLocation HORIZONTAL_VANILLA_SCROLLBAR_TEXTURE = new ResourceLocation("owo", "scrollbar/vanilla_horizontal_disabled");
+    public static final ResourceLocation DISABLED_HORIZONTAL_VANILLA_SCROLLBAR_TEXTURE = new ResourceLocation("owo", "scrollbar/vanilla_horizontal_disabled");
+    public static final ResourceLocation VANILLA_SCROLLBAR_TRACK_TEXTURE = new ResourceLocation("owo", "scrollbar/track");
+    public static final ResourceLocation FLAT_VANILLA_SCROLLBAR_TEXTURE = new ResourceLocation("owo", "scrollbar/vanilla_flat");
 
     protected double scrollOffset = 0;
     protected double currentScrollPosition = 0;
@@ -75,7 +76,7 @@ public class ScrollContainer<C extends Component> extends WrappingParentComponen
         super.layout(space);
 
         this.maxScroll = Math.max(0, this.direction.sizeGetter.apply(child) - (this.direction.sizeGetter.apply(this) - this.direction.insetGetter.apply(this.padding.get())));
-        this.scrollOffset = MathHelper.clamp(this.scrollOffset, 0, this.maxScroll + .5);
+        this.scrollOffset = Mth.clamp(this.scrollOffset, 0, this.maxScroll + .5);
         this.childSize = this.direction.sizeGetter.apply(this.child);
         this.lastScrollPosition = -1;
     }
@@ -118,15 +119,15 @@ public class ScrollContainer<C extends Component> extends WrappingParentComponen
         }
 
         // Draw, adding the fractional part of the offset via matrix translation
-        context.getMatrices().push();
+        context.pose().pushPose();
 
         double visualOffset = -(this.currentScrollPosition % 1d);
         if (visualOffset > 9999999e-7 || visualOffset < .1e-6) visualOffset = 0;
 
-        context.getMatrices().translate(this.direction.choose(visualOffset, 0), this.direction.choose(0, visualOffset), 0);
+        context.pose().translate(this.direction.choose(visualOffset, 0), this.direction.choose(0, visualOffset), 0);
         this.drawChildren(context, mouseX, mouseY, partialTicks, delta, this.childView);
 
-        context.getMatrices().pop();
+        context.pose().popPose();
 
         // -----
 
@@ -254,7 +255,7 @@ public class ScrollContainer<C extends Component> extends WrappingParentComponen
     }
 
     protected void scrollBy(double offset, boolean instant, boolean showScrollbar) {
-        this.scrollOffset = MathHelper.clamp(this.scrollOffset + offset, 0, this.maxScroll + .5);
+        this.scrollOffset = Mth.clamp(this.scrollOffset + offset, 0, this.maxScroll + .5);
         if (instant) this.currentScrollPosition = this.scrollOffset;
         if (showScrollbar) this.lastScrollbarInteractTime = System.currentTimeMillis() + 1250;
     }
@@ -268,9 +269,9 @@ public class ScrollContainer<C extends Component> extends WrappingParentComponen
      */
     public ScrollContainer<C> scrollTo(Component component) {
         if (this.direction == ScrollDirection.VERTICAL) {
-            this.scrollOffset = MathHelper.clamp(this.scrollOffset - (this.y - component.y() + component.margins().get().top()), 0, this.maxScroll);
+            this.scrollOffset = Mth.clamp(this.scrollOffset - (this.y - component.y() + component.margins().get().top()), 0, this.maxScroll);
         } else {
-            this.scrollOffset = MathHelper.clamp(this.scrollOffset - (this.x - component.x() + component.margins().get().right()), 0, this.maxScroll);
+            this.scrollOffset = Mth.clamp(this.scrollOffset - (this.x - component.x() + component.margins().get().right()), 0, this.maxScroll);
         }
         return this;
     }
@@ -379,7 +380,7 @@ public class ScrollContainer<C extends Component> extends WrappingParentComponen
             return (context, x, y, width, height, trackX, trackY, trackWidth, trackHeight, lastInteractTime, direction, active) -> {
                 if (!active) return;
 
-                final var progress = Easing.SINE.apply(MathHelper.clamp(lastInteractTime - System.currentTimeMillis(), 0, 750) / 750f);
+                final var progress = Easing.SINE.apply(Mth.clamp(lastInteractTime - System.currentTimeMillis(), 0, 750) / 750f);
                 int alpha = (int) (progress * (scrollbarColor >>> 24));
 
                 context.fill(

@@ -3,9 +3,9 @@ package io.wispforest.owo.itemgroup.gui;
 import io.wispforest.owo.itemgroup.Icon;
 import io.wispforest.owo.itemgroup.OwoItemGroup;
 import io.wispforest.owo.itemgroup.OwoItemSettings;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CreativeModeTab;
 
 /**
  * Represents a tab inside an {@link OwoItemGroup} that contains all items in the
@@ -14,21 +14,21 @@ import net.minecraft.util.Identifier;
  */
 public record ItemGroupTab(
         Icon icon,
-        Text name,
+        Component name,
         ContentSupplier contentSupplier,
-        Identifier texture,
+        ResourceLocation texture,
         boolean primary
 ) implements OwoItemGroup.ButtonDefinition {
 
-    public static final Identifier DEFAULT_TEXTURE = new Identifier("owo", "textures/gui/tabs.png");
+    public static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation("owo", "textures/gui/tabs.png");
 
     @Override
-    public Text tooltip() {
+    public Component tooltip() {
         return this.name;
     }
 
     @FunctionalInterface
     public interface ContentSupplier {
-        void addItems(ItemGroup.DisplayContext context, ItemGroup.Entries entries);
+        void addItems(CreativeModeTab.ItemDisplayParameters context, CreativeModeTab.Output entries);
     }
 }

@@ -1,18 +1,20 @@
 package io.wispforest.owo.serialization.format.bytebuf;
 
+
+
 import io.netty.buffer.ByteBuf;
 import io.wispforest.owo.serialization.Deserializer;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.encoding.StringEncoding;
-import net.minecraft.network.encoding.VarInts;
-import net.minecraft.network.encoding.VarLongs;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.Utf8String;
+import net.minecraft.network.VarInt;
+import net.minecraft.network.VarLong;
 
 public class ByteBufDeserializer implements Deserializer<ByteBuf> {
 
@@ -69,12 +71,12 @@ public class ByteBufDeserializer implements Deserializer<ByteBuf> {
 
     @Override
     public int readVarInt() {
-        return VarInts.read(this.buffer);
+        return VarInt.read(this.buffer);
     }
 
     @Override
     public long readVarLong() {
-        return VarLongs.read(this.buffer);
+        return VarLong.read(this.buffer);
     }
 
     // ---
@@ -86,7 +88,7 @@ public class ByteBufDeserializer implements Deserializer<ByteBuf> {
 
     @Override
     public String readString() {
-        return StringEncoding.decode(this.buffer, PacketByteBuf.DEFAULT_MAX_STRING_LENGTH);
+        return Utf8String.read(this.buffer, FriendlyByteBuf.MAX_STRING_LENGTH);
     }
 
     @Override
@@ -122,17 +124,17 @@ public class ByteBufDeserializer implements Deserializer<ByteBuf> {
 
     @Override
     public <E> Deserializer.Sequence<E> sequence(Endec<E> elementEndec) {
-        return new Sequence<>(elementEndec, this.readVarInt());
+        return new io.wispforest.owo.serialization.format.bytebuf.ByteBufDeserializer.Sequence<>(elementEndec, this.readVarInt());
     }
 
     @Override
     public <V> Deserializer.Map<V> map(Endec<V> valueEndec) {
-        return new Map<>(valueEndec, this.readVarInt());
+        return new io.wispforest.owo.serialization.format.bytebuf.ByteBufDeserializer.Map<>(valueEndec, this.readVarInt());
     }
 
     @Override
     public Struct struct() {
-        return new Sequence<>(null, 0);
+        return new io.wispforest.owo.serialization.format.bytebuf.ByteBufDeserializer.Sequence<>(null, 0);
     }
 
     // ---

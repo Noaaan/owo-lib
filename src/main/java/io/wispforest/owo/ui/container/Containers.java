@@ -2,7 +2,6 @@ package io.wispforest.owo.ui.container;
 
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.text.Text;
 
 public final class Containers {
 
@@ -52,7 +51,7 @@ public final class Containers {
         return new DraggableContainer<>(horizontalSizing, verticalSizing, child);
     }
 
-    public static CollapsibleContainer collapsible(Sizing horizontalSizing, Sizing verticalSizing, Text title, boolean expanded) {
+    public static CollapsibleContainer collapsible(Sizing horizontalSizing, Sizing verticalSizing, net.minecraft.network.chat.Component title, boolean expanded) {
         return new CollapsibleContainer(horizontalSizing, verticalSizing, title, expanded);
     }
 

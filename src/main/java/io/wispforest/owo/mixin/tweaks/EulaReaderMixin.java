@@ -1,6 +1,5 @@
 package io.wispforest.owo.mixin.tweaks;
 
-import net.minecraft.server.dedicated.EulaReader;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,8 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.Scanner;
+import net.minecraft.server.Eula;
 
-@Mixin(EulaReader.class)
+@Mixin(Eula.class)
 public abstract class EulaReaderMixin {
 
     @Shadow
@@ -24,13 +24,13 @@ public abstract class EulaReaderMixin {
 
     @Shadow
     @Final
-    private Path eulaFile;
+    private Path file;
 
-    @Shadow public abstract boolean isEulaAgreedTo();
+    @Shadow public abstract boolean hasAgreedToEULA();
 
-    @Inject(method = "checkEulaAgreement", at = @At(value = "TAIL"), cancellable = true)
+    @Inject(method = "hasAgreedToEULA", at = @At(value = "TAIL"), cancellable = true)
     private void overrideEulaAgreement(CallbackInfoReturnable<Boolean> cir) {
-        if (this.isEulaAgreedTo()) return;
+        if (this.hasAgreedToEULA()) return;
 
         var scanner = new Scanner(System.in);
         LOGGER.info("By answering 'true' to this prompt you are indicating your agreement to Minecraft's EULA (https://account.mojang.com/documents/minecraft_eula)\nEULA:");
@@ -38,7 +38,7 @@ public abstract class EulaReaderMixin {
         var input = scanner.next();
         if (!input.equalsIgnoreCase("true")) return;
 
-        try (var inStream = Files.newInputStream(this.eulaFile); var outStream = Files.newOutputStream(this.eulaFile)) {
+        try (var inStream = Files.newInputStream(this.file); var outStream = Files.newOutputStream(this.file)) {
             var properties = new Properties();
             properties.load(inStream);
             properties.setProperty("eula", "true");

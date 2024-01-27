@@ -3,15 +3,15 @@ package io.wispforest.owo.config.ui.component;
 import io.wispforest.owo.config.Option;
 import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.text.Text;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 
 @ApiStatus.Internal
 public class ConfigEnumButton extends ButtonComponent implements OptionValueProvider {
@@ -23,7 +23,7 @@ public class ConfigEnumButton extends ButtonComponent implements OptionValueProv
     protected boolean wasRightClicked = false;
 
     public ConfigEnumButton() {
-        super(Text.empty(), button -> {});
+        super(Component.empty(), button -> {});
         this.verticalSizing(Sizing.fixed(20));
         this.updateMessage();
     }
@@ -62,9 +62,9 @@ public class ConfigEnumButton extends ButtonComponent implements OptionValueProv
 
         var optionValueKey = this.backingOption.translationKey() + ".value." + valueName;
 
-        this.setMessage(I18n.hasTranslation(optionValueKey)
-                ? Text.translatable(optionValueKey)
-                : Text.translatable("text.config." + this.backingOption.configName() + ".enum." + enumName + "." + valueName)
+        this.setMessage(I18n.exists(optionValueKey)
+                ? Component.translatable(optionValueKey)
+                : Component.translatable("text.config." + this.backingOption.configName() + ".enum." + enumName + "." + valueName)
         );
     }
 

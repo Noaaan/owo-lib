@@ -1,6 +1,7 @@
 package io.wispforest.owo.ui.component;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.wispforest.owo.ui.base.BaseComponent;
 import io.wispforest.owo.ui.core.AnimatableProperty;
 import io.wispforest.owo.ui.core.OwoUIDrawContext;
@@ -8,14 +9,14 @@ import io.wispforest.owo.ui.core.PositionedRectangle;
 import io.wispforest.owo.ui.core.Sizing;
 import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIParsing;
-import net.minecraft.util.Identifier;
 import org.w3c.dom.Element;
 
 import java.util.Map;
+import net.minecraft.resources.ResourceLocation;
 
 public class TextureComponent extends BaseComponent {
 
-    protected final Identifier texture;
+    protected final ResourceLocation texture;
     protected final int u, v;
     protected final int regionWidth, regionHeight;
     protected final int textureWidth, textureHeight;
@@ -23,7 +24,7 @@ public class TextureComponent extends BaseComponent {
     protected final AnimatableProperty<PositionedRectangle> visibleArea;
     protected boolean blend = false;
 
-    protected TextureComponent(Identifier texture, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
+    protected TextureComponent(ResourceLocation texture, int u, int v, int regionWidth, int regionHeight, int textureWidth, int textureHeight) {
         this.texture = texture;
         this.u = u;
         this.v = v;
@@ -60,8 +61,8 @@ public class TextureComponent extends BaseComponent {
             RenderSystem.defaultBlendFunc();
         }
 
-        var matrices = context.getMatrices();
-        matrices.push();
+        var matrices = context.pose();
+        matrices.pushPose();
         matrices.translate(x, y, 0);
         matrices.scale(this.width / (float) this.regionWidth, this.height / (float) this.regionHeight, 0);
 
@@ -70,7 +71,7 @@ public class TextureComponent extends BaseComponent {
         int bottomEdge = Math.min(visibleArea.y() + visibleArea.height(), regionHeight);
         int rightEdge = Math.min(visibleArea.x() + visibleArea.width(), regionWidth);
 
-        context.drawTexture(this.texture,
+        context.blit(this.texture,
                 visibleArea.x(),
                 visibleArea.y(),
                 rightEdge - visibleArea.x(),
@@ -86,7 +87,7 @@ public class TextureComponent extends BaseComponent {
             RenderSystem.disableBlend();
         }
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     public TextureComponent visibleArea(PositionedRectangle visibleArea) {

@@ -18,13 +18,14 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
@@ -42,12 +43,12 @@ import java.util.Map;
 public class ParticleSystemController {
 
     @ApiStatus.Internal
-    public static final Map<Identifier, ParticleSystemController> REGISTERED_CONTROLLERS = new HashMap<>();
+    public static final Map<ResourceLocation, ParticleSystemController> REGISTERED_CONTROLLERS = new HashMap<>();
 
     @ApiStatus.Internal
     public final Int2ObjectMap<ParticleSystem<?>> systemsByIndex = new Int2ObjectOpenHashMap<>();
 
-    public final Identifier channelId;
+    public final ResourceLocation channelId;
     private int maxIndex = 0;
     private final String ownerClassName;
 
@@ -60,7 +61,7 @@ public class ParticleSystemController {
      *
      * @param channelId The packet ID to use
      */
-    public ParticleSystemController(Identifier channelId) {
+    public ParticleSystemController(ResourceLocation channelId) {
         OwoFreezer.checkRegister("Particle system controllers");
 
         if (REGISTERED_CONTROLLERS.containsKey(channelId)) {
@@ -132,13 +133,13 @@ public class ParticleSystemController {
         return this.registerDeferred(dataClass, ReflectiveEndecBuilder.get(dataClass));
     }
 
-    <T> void sendPacket(ParticleSystem<T> particleSystem, ServerWorld world, Vec3d pos, T data) {
-        PacketByteBuf buf = PacketByteBufs.create();
+    <T> void sendPacket(ParticleSystem<T> particleSystem, ServerLevel world, Vec3 pos, T data) {
+        FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeVarInt(particleSystem.index);
         VectorSerializer.write(buf, pos);
         buf.write(particleSystem.endec, data);
 
-        for (var player : PlayerLookup.tracking(world, BlockPos.ofFloored(pos))) {
+        for (var player : PlayerLookup.tracking(world, BlockPos.containing(pos))) {
             ServerPlayNetworking.send(player, channelId, buf);
         }
     }
@@ -164,10 +165,10 @@ public class ParticleSystemController {
     @Environment(EnvType.CLIENT)
     private class Client {
         @SuppressWarnings("unchecked")
-        private void handler(MinecraftClient client, ClientPlayNetworkHandler networkHandler, PacketByteBuf buf, PacketSender sender) {
+        private void handler(Minecraft client, ClientPacketListener networkHandler, FriendlyByteBuf buf, PacketSender sender) {
             int index = buf.readVarInt();
 
-            Vec3d pos = VectorSerializer.read(buf);
+            Vec3 pos = VectorSerializer.read(buf);
 
             if (maxIndex <= index || index < 0) {
                 Owo.LOGGER.warn("Received unknown particle system index {} on channel {}", index, channelId);
@@ -176,7 +177,7 @@ public class ParticleSystemController {
 
             ParticleSystem<Object> system = (ParticleSystem<Object>) systemsByIndex.get(index);
             var data = buf.read(system.endec);
-            client.execute(() -> system.handler.executeParticleSystem(client.world, pos, data));
+            client.execute(() -> system.handler.executeParticleSystem(client.level, pos, data));
         }
     }
 }

@@ -7,6 +7,7 @@ import io.wispforest.owo.serialization.Serializer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class AttributeEndecBuilder<T> {
 

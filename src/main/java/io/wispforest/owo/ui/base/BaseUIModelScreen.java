@@ -7,12 +7,12 @@ import io.wispforest.owo.ui.parsing.ConfigureHotReloadScreen;
 import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIModelLoader;
 import io.wispforest.owo.ui.util.UIErrorToast;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * A simple base implementation of a screen that builds its UI
@@ -35,7 +35,7 @@ public abstract class BaseUIModelScreen<R extends ParentComponent> extends BaseO
     protected final UIModel model;
     protected final Class<R> rootComponentClass;
 
-    protected final @Nullable Identifier modelId;
+    protected final @Nullable ResourceLocation modelId;
 
     protected BaseUIModelScreen(Class<R> rootComponentClass, DataSource source) {
         var providedModel = source.get();
@@ -52,7 +52,7 @@ public abstract class BaseUIModelScreen<R extends ParentComponent> extends BaseO
                 : null;
     }
 
-    protected BaseUIModelScreen(Class<R> rootComponentClass, Identifier modelId) {
+    protected BaseUIModelScreen(Class<R> rootComponentClass, ResourceLocation modelId) {
         this(rootComponentClass, DataSource.asset(modelId));
     }
 
@@ -64,7 +64,7 @@ public abstract class BaseUIModelScreen<R extends ParentComponent> extends BaseO
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (Owo.DEBUG && this.modelId != null && keyCode == GLFW.GLFW_KEY_F5 && (modifiers & GLFW.GLFW_MOD_CONTROL) != 0) {
-            this.client.setScreen(new ConfigureHotReloadScreen(this.modelId, this));
+            this.minecraft.setScreen(new ConfigureHotReloadScreen(this.modelId, this));
             return true;
         }
 
@@ -127,11 +127,11 @@ public abstract class BaseUIModelScreen<R extends ParentComponent> extends BaseO
          * @param assetPath The path of the asset that was parsed into
          *                  a UI model, relative to {@code assets/<namespace>/owo_ui}
          */
-        static DataSource asset(Identifier assetPath) {
+        static DataSource asset(ResourceLocation assetPath) {
             return new AssetDataSource(assetPath);
         }
 
-        record AssetDataSource(Identifier assetPath) implements DataSource {
+        record AssetDataSource(ResourceLocation assetPath) implements DataSource {
             @Override
             public @Nullable UIModel get() {
                 return UIModelLoader.get(assetPath);

@@ -1,24 +1,25 @@
 package io.wispforest.owo.serialization.endec;
 
+
 import com.mojang.datafixers.util.Function3;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
 import io.wispforest.owo.serialization.format.nbt.NbtEndec;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Uuids;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 import java.time.Instant;
@@ -44,7 +45,7 @@ public final class BuiltInEndecs {
                     SerializationAttribute.HUMAN_READABLE,
                     Endec.STRING.xmap(java.util.UUID::fromString, java.util.UUID::toString)
             ).orElse(
-                    INT_ARRAY.xmap(Uuids::toUuid, Uuids::toIntArray)
+                    INT_ARRAY.xmap(UUIDUtil::uuidFromIntArray, UUIDUtil::uuidToIntArray)
             );
 
     public static final Endec<Date> DATE = Endec
@@ -57,12 +58,12 @@ public final class BuiltInEndecs {
 
     // --- MC Types ---
 
-    public static final Endec<Identifier> IDENTIFIER = Endec.STRING.xmap(Identifier::new, Identifier::toString);
-    public static final Endec<ItemStack> ITEM_STACK = NbtEndec.COMPOUND.xmap(ItemStack::fromNbt, stack -> stack.writeNbt(new NbtCompound()));
-    public static final Endec<Text> TEXT = Endec.ofCodec(TextCodecs.CODEC);
+    public static final Endec<ResourceLocation> IDENTIFIER = Endec.STRING.xmap(ResourceLocation::new, ResourceLocation::toString);
+    public static final Endec<ItemStack> ITEM_STACK = NbtEndec.COMPOUND.xmap(ItemStack::of, stack -> stack.save(new CompoundTag()));
+    public static final Endec<Component> TEXT = Endec.ofCodec(ComponentSerialization.CODEC);
 
     public static final Endec<Vec3i> VEC3I = vectorEndec("Vec3i", Endec.INT, Vec3i::new, Vec3i::getX, Vec3i::getY, Vec3i::getZ);
-    public static final Endec<Vec3d> VEC3D = vectorEndec("Vec3d", Endec.DOUBLE, Vec3d::new, Vec3d::getX, Vec3d::getY, Vec3d::getZ);
+    public static final Endec<Vec3> VEC3D = vectorEndec("Vec3d", Endec.DOUBLE, Vec3::new, Vec3::x, Vec3::y, Vec3::z);
     public static final Endec<Vector3f> VECTOR3F = vectorEndec("Vector3f", Endec.FLOAT, Vector3f::new, Vector3f::x, Vector3f::y, Vector3f::z);
 
     public static final Endec<BlockPos> BLOCK_POS = Endec
@@ -70,7 +71,7 @@ public final class BuiltInEndecs {
                     SerializationAttribute.HUMAN_READABLE,
                     vectorEndec("BlockPos", Endec.INT, BlockPos::new, BlockPos::getX, BlockPos::getY, BlockPos::getZ)
             ).orElse(
-                    Endec.LONG.xmap(BlockPos::fromLong, BlockPos::asLong)
+                    Endec.LONG.xmap(BlockPos::of, BlockPos::asLong)
             );
 
     public static final Endec<ChunkPos> CHUNK_POS = Endec
@@ -87,7 +88,7 @@ public final class BuiltInEndecs {
             )
             .orElse(Endec.LONG.xmap(ChunkPos::new, ChunkPos::toLong));
 
-    public static final Endec<PacketByteBuf> PACKET_BYTE_BUF = Endec.BYTES
+    public static final Endec<FriendlyByteBuf> PACKET_BYTE_BUF = Endec.BYTES
             .xmap(bytes -> {
                 var buffer = PacketByteBufs.create();
                 buffer.writeBytes(bytes);
@@ -103,17 +104,17 @@ public final class BuiltInEndecs {
     // --- Constructors for MC types ---
 
     public static <T> Endec<T> ofRegistry(Registry<T> registry) {
-        return IDENTIFIER.xmap(registry::get, registry::getId);
+        return IDENTIFIER.xmap(registry::get, registry::getKey);
     }
 
-    public static <T> Endec<TagKey<T>> unprefixedTagKey(RegistryKey<? extends Registry<T>> registry) {
-        return IDENTIFIER.xmap(id -> TagKey.of(registry, id), TagKey::id);
+    public static <T> Endec<TagKey<T>> unprefixedTagKey(ResourceKey<? extends Registry<T>> registry) {
+        return IDENTIFIER.xmap(id -> TagKey.create(registry, id), TagKey::location);
     }
 
-    public static <T> Endec<TagKey<T>> prefixedTagKey(RegistryKey<? extends Registry<T>> registry) {
+    public static <T> Endec<TagKey<T>> prefixedTagKey(ResourceKey<? extends Registry<T>> registry) {
         return Endec.STRING.xmap(
-                s -> TagKey.of(registry, new Identifier(s.substring(1))),
-                tag -> "#" + tag.id()
+                s -> TagKey.create(registry, new ResourceLocation(s.substring(1))),
+                tag -> "#" + tag.location()
         );
     }
 

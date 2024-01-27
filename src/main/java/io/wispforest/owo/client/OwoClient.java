@@ -1,5 +1,6 @@
 package io.wispforest.owo.client;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.client.screens.ScreenInternals;
 import io.wispforest.owo.command.debug.OwoDebugCommands;
@@ -15,10 +16,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
@@ -45,22 +45,22 @@ public class OwoClient implements ClientModInitializer {
             Ignored 'owo.renderdocPath' property as this Minecraft instance is not running on Windows.
             ========================================""";
 
-    public static final GlProgram HSV_PROGRAM = new GlProgram(new Identifier("owo", "spectrum"), VertexFormats.POSITION_COLOR);
+    public static final GlProgram HSV_PROGRAM = new GlProgram(new ResourceLocation("owo", "spectrum"), DefaultVertexFormat.POSITION_COLOR);
     public static final BlurProgram BLUR_PROGRAM = new BlurProgram();
 
     @Override
     public void onInitializeClient() {
         ModDataLoader.load(OwoItemGroupLoader.INSTANCE);
 
-        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new UIModelLoader());
-        ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new NinePatchTexture.MetadataLoader());
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new UIModelLoader());
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new NinePatchTexture.MetadataLoader());
 
         final var renderdocPath = System.getProperty("owo.renderdocPath");
         if (renderdocPath != null) {
-            if (Util.getOperatingSystem() == Util.OperatingSystem.WINDOWS) {
+            if (Util.getPlatform() == Util.OS.WINDOWS) {
                 System.load(renderdocPath);
             } else {
-                Owo.LOGGER.warn(switch (Util.getOperatingSystem()) {
+                Owo.LOGGER.warn(switch (Util.getPlatform()) {
                     case LINUX -> LINUX_RENDERDOC_WARNING;
                     case OSX -> MAC_RENDERDOC_WARNING;
                     default -> GENERIC_RENDERDOC_WARNING;

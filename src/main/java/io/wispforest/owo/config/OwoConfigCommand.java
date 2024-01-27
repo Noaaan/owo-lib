@@ -13,24 +13,25 @@ import io.wispforest.owo.config.ui.ConfigScreen;
 import io.wispforest.owo.ops.TextOps;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public class OwoConfigCommand {
 
-    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess access) {
+    public static void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext access) {
         dispatcher.register(ClientCommandManager.literal("owo-config")
                 .then(ClientCommandManager.argument("config_id", new ConfigScreenArgumentType())
                         .executes(context -> {
                             var screen = context.getArgument("config_id", ConfigScreen.class);
-                            MinecraftClient.getInstance().send(() -> MinecraftClient.getInstance().setScreen(screen));
+                            Minecraft.getInstance().tell(() -> Minecraft.getInstance().setScreen(screen));
                             return 0;
                         })));
     }
@@ -38,7 +39,7 @@ public class OwoConfigCommand {
     private static class ConfigScreenArgumentType implements ArgumentType<ConfigScreen> {
 
         private static final SimpleCommandExceptionType NO_SUCH_CONFIG_SCREEN = new SimpleCommandExceptionType(
-                TextOps.concat(Owo.PREFIX, Text.literal("no config screen with that id"))
+                TextOps.concat(Owo.PREFIX, Component.literal("no config screen with that id"))
         );
 
         @Override
@@ -53,7 +54,7 @@ public class OwoConfigCommand {
         public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
             var configNames = new ArrayList<String>();
             ConfigScreen.forEachProvider((s, screenFunction) -> configNames.add(s));
-            return CommandSource.suggestMatching(configNames, builder);
+            return SharedSuggestionProvider.suggest(configNames, builder);
         }
     }
 }

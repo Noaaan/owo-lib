@@ -8,13 +8,17 @@ import io.wispforest.owo.util.pond.OwoItemExtensions;
 import it.unimi.dsi.fastutil.ints.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.*;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.resource.featuretoggle.FeatureSet;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ItemLike;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -24,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Extensions for  {@link ItemGroup} which support multiple sub-tabs
+ * Extensions for  {@link CreativeModeTab} which support multiple sub-tabs
  * within, as well as arbitrary buttons with defaults provided for links
  * to places like GitHub, Modrinth, etc.
  * <p>
@@ -34,11 +38,11 @@ import java.util.function.Supplier;
  * <p>
  * The roots of this implementation originated in Biome Makeover, where it was written by Lemonszz
  */
-public abstract class OwoItemGroup extends ItemGroup {
+public abstract class OwoItemGroup extends CreativeModeTab {
 
-    public static final BiConsumer<Item, Entries> DEFAULT_STACK_GENERATOR = (item, stacks) -> stacks.add(item.getDefaultStack());
+    public static final BiConsumer<Item, Output> DEFAULT_STACK_GENERATOR = (item, stacks) -> stacks.accept(item.getDefaultInstance());
 
-    protected static final ItemGroupTab PLACEHOLDER_TAB = new ItemGroupTab(Icon.of(Items.AIR), Text.empty(), (br, uh) -> {}, ItemGroupTab.DEFAULT_TEXTURE, false);
+    protected static final ItemGroupTab PLACEHOLDER_TAB = new ItemGroupTab(Icon.of(Items.AIR), Component.empty(), (br, uh) -> {}, ItemGroupTab.DEFAULT_TEXTURE, false);
 
     public final List<ItemGroupTab> tabs = new ArrayList<>();
     public final List<ItemGroupButton> buttons = new ArrayList<>();
@@ -52,7 +56,7 @@ public abstract class OwoItemGroup extends ItemGroup {
     private final IntSet activeTabsView = IntSets.unmodifiable(this.activeTabs);
     private boolean initialized = false;
 
-    private final @Nullable Identifier backgroundTexture;
+    private final @Nullable ResourceLocation backgroundTexture;
     private final @Nullable ScrollerTextures scrollerTextures;
     private final @Nullable TabTextures tabTextures;
 
@@ -62,8 +66,8 @@ public abstract class OwoItemGroup extends ItemGroup {
     private final boolean displaySingleTab;
     private final boolean allowMultiSelect;
 
-    protected OwoItemGroup(Identifier id, Consumer<OwoItemGroup> initializer, Supplier<Icon> iconSupplier, int tabStackHeight, int buttonStackHeight, @Nullable Identifier backgroundTexture, @Nullable ScrollerTextures scrollerTextures, @Nullable TabTextures tabTextures, boolean useDynamicTitle, boolean displaySingleTab, boolean allowMultiSelect) {
-        super(null, -1, Type.CATEGORY, Text.translatable("itemGroup.%s.%s".formatted(id.getNamespace(), id.getPath())), () -> ItemStack.EMPTY, (displayContext, entries) -> {});
+    protected OwoItemGroup(ResourceLocation id, Consumer<OwoItemGroup> initializer, Supplier<Icon> iconSupplier, int tabStackHeight, int buttonStackHeight, @Nullable ResourceLocation backgroundTexture, @Nullable ScrollerTextures scrollerTextures, @Nullable TabTextures tabTextures, boolean useDynamicTitle, boolean displaySingleTab, boolean allowMultiSelect) {
+        super(null, -1, Type.CATEGORY, Component.translatable("itemGroup.%s.%s".formatted(id.getNamespace(), id.getPath())), () -> ItemStack.EMPTY, (displayContext, entries) -> {});
         this.initializer = initializer;
         this.iconSupplier = iconSupplier;
         this.tabStackHeight = tabStackHeight;
@@ -87,8 +91,8 @@ public abstract class OwoItemGroup extends ItemGroup {
         });
     }
 
-    public static Builder builder(Identifier id, Supplier<Icon> iconSupplier) {
-        return new Builder(id, iconSupplier);
+    public static io.wispforest.owo.itemgroup.OwoItemGroup.Builder builder(ResourceLocation id, Supplier<Icon> iconSupplier) {
+        return new io.wispforest.owo.itemgroup.OwoItemGroup.Builder(id, iconSupplier);
     }
 
     // ---------
@@ -124,9 +128,9 @@ public abstract class OwoItemGroup extends ItemGroup {
      * the right side of the creative menu
      *
      * @param button The button to add
-     * @see ItemGroupButton#link(ItemGroup, Icon, String, String)
-     * @see ItemGroupButton#curseforge(ItemGroup, String)
-     * @see ItemGroupButton#discord(ItemGroup, String)
+     * @see ItemGroupButton#link(CreativeModeTab, Icon, String, String)
+     * @see ItemGroupButton#curseforge(CreativeModeTab, String)
+     * @see ItemGroupButton#discord(CreativeModeTab, String)
      */
     public void addButton(ItemGroupButton button) {
         this.buttons.add(button);
@@ -139,15 +143,15 @@ public abstract class OwoItemGroup extends ItemGroup {
      * @param name       The name of the tab, used for the translation key
      * @param contentTag The tag used for filling this tab
      * @param texture    The texture to use for drawing the button
-     * @see Icon#of(ItemConvertible)
+     * @see Icon#of(ItemLike)
      */
-    public void addTab(Icon icon, String name, @Nullable TagKey<Item> contentTag, Identifier texture, boolean primary) {
+    public void addTab(Icon icon, String name, @Nullable TagKey<Item> contentTag, ResourceLocation texture, boolean primary) {
         this.tabs.add(new ItemGroupTab(
                 icon,
                 ButtonDefinition.tooltipFor(this, "tab", name),
                 contentTag == null
                         ? (context, entries) -> {}
-                        : (context, entries) -> Registries.ITEM.stream().filter(item -> item.getRegistryEntry().isIn(contentTag)).forEach(entries::add),
+                        : (context, entries) -> BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().is(contentTag)).forEach(entries::accept),
                 texture,
                 primary
         ));
@@ -159,7 +163,7 @@ public abstract class OwoItemGroup extends ItemGroup {
      * @param icon       The icon to use
      * @param name       The name of the tab, used for the translation key
      * @param contentTag The tag used for filling this tab
-     * @see Icon#of(ItemConvertible)
+     * @see Icon#of(ItemLike)
      */
     public void addTab(Icon icon, String name, @Nullable TagKey<Item> contentTag, boolean primary) {
         addTab(icon, name, contentTag, ItemGroupTab.DEFAULT_TEXTURE, primary);
@@ -172,9 +176,9 @@ public abstract class OwoItemGroup extends ItemGroup {
      * @param name            The name of the tab, used for the translation key
      * @param contentSupplier The function used for filling this tab
      * @param texture         The texture to use for drawing the button
-     * @see Icon#of(ItemConvertible)
+     * @see Icon#of(ItemLike)
      */
-    public void addCustomTab(Icon icon, String name, ItemGroupTab.ContentSupplier contentSupplier, Identifier texture, boolean primary) {
+    public void addCustomTab(Icon icon, String name, ItemGroupTab.ContentSupplier contentSupplier, ResourceLocation texture, boolean primary) {
         this.tabs.add(new ItemGroupTab(
                 icon,
                 ButtonDefinition.tooltipFor(this, "tab", name),
@@ -188,26 +192,26 @@ public abstract class OwoItemGroup extends ItemGroup {
      * @param icon            The icon to use
      * @param name            The name of the tab, used for the translation key
      * @param contentSupplier The function used for filling this tab
-     * @see Icon#of(ItemConvertible)
+     * @see Icon#of(ItemLike)
      */
     public void addCustomTab(Icon icon, String name, ItemGroupTab.ContentSupplier contentSupplier, boolean primary) {
         this.addCustomTab(icon, name, contentSupplier, ItemGroupTab.DEFAULT_TEXTURE, primary);
     }
 
     @Override
-    public void updateEntries(DisplayContext context) {
-        super.updateEntries(context);
+    public void buildContents(ItemDisplayParameters context) {
+        super.buildContents(context);
 
         var searchEntries = new SearchOnlyEntries(this, context.enabledFeatures());
 
         this.collectItemsFromRegistry(searchEntries, -1);
         this.tabs.forEach(tab -> tab.contentSupplier().addItems(context, searchEntries));
 
-        ((ItemGroupAccessor) this).owo$setSearchTabStacks(searchEntries.searchTabStacks);
+        ((ItemGroupAccessor) this).owo$setSearchTabStacks(searchEntries.searchTabContents);
     }
 
-    protected void collectItemsFromRegistry(Entries entries, int tab) {
-        Registries.ITEM.stream()
+    protected void collectItemsFromRegistry(Output entries, int tab) {
+        BuiltInRegistries.ITEM.stream()
                 .filter(item -> ((OwoItemExtensions) item).owo$group() == this && (tab < 0 || tab == ((OwoItemExtensions) item).owo$tab()))
                 .forEach(item -> ((OwoItemExtensions) item).owo$stackGenerator().accept(item, entries));
     }
@@ -218,11 +222,11 @@ public abstract class OwoItemGroup extends ItemGroup {
      * Select only {@code tab}, deselecting all other tabs,
      * using {@code context} for re-population
      */
-    public void selectSingleTab(int tab, DisplayContext context) {
+    public void selectSingleTab(int tab, ItemDisplayParameters context) {
         this.activeTabs.clear();
         this.activeTabs.add(tab);
 
-        this.updateEntries(context);
+        this.buildContents(context);
     }
 
     /**
@@ -230,15 +234,15 @@ public abstract class OwoItemGroup extends ItemGroup {
      * tabs, using {@code context} for re-population.
      * <p>
      * If this group does not allow multiple selection, behaves
-     * like {@link #selectSingleTab(int, DisplayContext)}
+     * like {@link #selectSingleTab(int, ItemDisplayParameters)}
      */
-    public void selectTab(int tab, DisplayContext context) {
+    public void selectTab(int tab, ItemDisplayParameters context) {
         if (!this.allowMultiSelect) {
             this.activeTabs.clear();
         }
 
         this.activeTabs.add(tab);
-        this.updateEntries(context);
+        this.buildContents(context);
     }
 
     /**
@@ -246,7 +250,7 @@ public abstract class OwoItemGroup extends ItemGroup {
      * re-population. If this results in no tabs being selected, all tabs are
      * automatically selected instead
      */
-    public void deselectTab(int tab, DisplayContext context) {
+    public void deselectTab(int tab, ItemDisplayParameters context) {
         if (!this.allowMultiSelect) return;
 
         this.activeTabs.remove(tab);
@@ -256,15 +260,15 @@ public abstract class OwoItemGroup extends ItemGroup {
             }
         }
 
-        this.updateEntries(context);
+        this.buildContents(context);
     }
 
     /**
-     * Shorthand for {@link #selectTab(int, DisplayContext)} or
-     * {@link #deselectTab(int, DisplayContext)}, depending on the tabs
+     * Shorthand for {@link #selectTab(int, ItemDisplayParameters)} or
+     * {@link #deselectTab(int, ItemDisplayParameters)}, depending on the tabs
      * current state
      */
-    public void toggleTab(int tab, DisplayContext context) {
+    public void toggleTab(int tab, ItemDisplayParameters context) {
         if (this.isTabSelected(tab)) {
             this.deselectTab(tab, context);
         } else {
@@ -287,7 +291,7 @@ public abstract class OwoItemGroup extends ItemGroup {
         return this.activeTabs.contains(tab);
     }
 
-    public @Nullable Identifier getBackgroundTexture() {
+    public @Nullable ResourceLocation getBackgroundTexture() {
         return this.backgroundTexture;
     }
 
@@ -338,97 +342,97 @@ public abstract class OwoItemGroup extends ItemGroup {
         return true;
     }
 
-    public Identifier id() {
-        return Registries.ITEM_GROUP.getId(this);
+    public ResourceLocation id() {
+        return BuiltInRegistries.CREATIVE_MODE_TAB.getKey(this);
     }
 
     public static class Builder {
 
-        private final Identifier id;
+        private final ResourceLocation id;
         private final Supplier<Icon> iconSupplier;
 
         private Consumer<OwoItemGroup> initializer = owoItemGroup -> {};
         private int tabStackHeight = 4;
         private int buttonStackHeight = 4;
-        private @Nullable Identifier backgroundTexture = null;
+        private @Nullable ResourceLocation backgroundTexture = null;
         private @Nullable ScrollerTextures scrollerTextures = null;
         private @Nullable TabTextures tabTextures = null;
         private boolean useDynamicTitle = true;
         private boolean displaySingleTab = false;
         private boolean allowMultiSelect = true;
 
-        private Builder(Identifier id, Supplier<Icon> iconSupplier) {
+        private Builder(ResourceLocation id, Supplier<Icon> iconSupplier) {
             this.id = id;
             this.iconSupplier = iconSupplier;
         }
 
-        public Builder initializer(Consumer<OwoItemGroup> initializer) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder initializer(Consumer<OwoItemGroup> initializer) {
             this.initializer = initializer;
             return this;
         }
 
-        public Builder tabStackHeight(int tabStackHeight) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder tabStackHeight(int tabStackHeight) {
             this.tabStackHeight = tabStackHeight;
             return this;
         }
 
-        public Builder buttonStackHeight(int buttonStackHeight) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder buttonStackHeight(int buttonStackHeight) {
             this.buttonStackHeight = buttonStackHeight;
             return this;
         }
 
-        public Builder backgroundTexture(@Nullable Identifier backgroundTexture) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder backgroundTexture(@Nullable ResourceLocation backgroundTexture) {
             this.backgroundTexture = backgroundTexture;
             return this;
         }
 
-        public Builder scrollerTextures(ScrollerTextures scrollerTextures) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder scrollerTextures(ScrollerTextures scrollerTextures) {
             this.scrollerTextures = scrollerTextures;
             return this;
         }
 
-        public Builder tabTextures(TabTextures tabTextures) {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder tabTextures(TabTextures tabTextures) {
             this.tabTextures = tabTextures;
             return this;
         }
 
-        public Builder disableDynamicTitle() {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder disableDynamicTitle() {
             this.useDynamicTitle = false;
             return this;
         }
 
-        public Builder displaySingleTab() {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder displaySingleTab() {
             this.displaySingleTab = true;
             return this;
         }
 
-        public Builder withoutMultipleSelection() {
+        public io.wispforest.owo.itemgroup.OwoItemGroup.Builder withoutMultipleSelection() {
             this.allowMultiSelect = false;
             return this;
         }
 
         public OwoItemGroup build() {
             final var group = new OwoItemGroup(id, initializer, iconSupplier, tabStackHeight, buttonStackHeight, backgroundTexture, scrollerTextures, tabTextures, useDynamicTitle, displaySingleTab, allowMultiSelect) {};
-            Registry.register(Registries.ITEM_GROUP, this.id, group);
+            Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, this.id, group);
             return group;
         }
     }
 
-    protected static class SearchOnlyEntries extends EntriesImpl {
+    protected static class SearchOnlyEntries extends ItemDisplayBuilder {
 
-        public SearchOnlyEntries(ItemGroup group, FeatureSet enabledFeatures) {
+        public SearchOnlyEntries(CreativeModeTab group, FeatureFlagSet enabledFeatures) {
             super(group, enabledFeatures);
         }
 
         @Override
-        public void add(ItemStack stack, StackVisibility visibility) {
-            if (visibility == StackVisibility.PARENT_TAB_ONLY) return;
-            super.add(stack, StackVisibility.SEARCH_TAB_ONLY);
+        public void accept(ItemStack stack, TabVisibility visibility) {
+            if (visibility == TabVisibility.PARENT_TAB_ONLY) return;
+            super.accept(stack, TabVisibility.SEARCH_TAB_ONLY);
         }
     }
 
-    public record ScrollerTextures(Identifier enabled, Identifier disabled) {}
-    public record TabTextures(Identifier topSelected, Identifier topSelectedFirstColumn, Identifier topUnselected, Identifier bottomSelected, Identifier bottomSelectedFirstColumn, Identifier bottomUnselected) {}
+    public record ScrollerTextures(ResourceLocation enabled, ResourceLocation disabled) {}
+    public record TabTextures(ResourceLocation topSelected, ResourceLocation topSelectedFirstColumn, ResourceLocation topUnselected, ResourceLocation bottomSelected, ResourceLocation bottomSelectedFirstColumn, ResourceLocation bottomUnselected) {}
 
     // Utility
 
@@ -441,17 +445,17 @@ public abstract class OwoItemGroup extends ItemGroup {
 
         Icon icon();
 
-        Identifier texture();
+        ResourceLocation texture();
 
-        Text tooltip();
+        Component tooltip();
 
-        static Text tooltipFor(ItemGroup group, String component, String componentName) {
-            var registryId = Registries.ITEM_GROUP.getId(group);
+        static Component tooltipFor(CreativeModeTab group, String component, String componentName) {
+            var registryId = BuiltInRegistries.CREATIVE_MODE_TAB.getKey(group);
             var groupId = registryId.getNamespace().equals("minecraft")
                     ? registryId.getPath()
                     : registryId.getNamespace() + "." + registryId.getPath();
 
-            return Text.translatable("itemGroup." + groupId + "." + component + "." + componentName);
+            return Component.translatable("itemGroup." + groupId + "." + component + "." + componentName);
         }
 
     }

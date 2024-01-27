@@ -1,6 +1,6 @@
 package io.wispforest.owo.ui.core;
 
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 /**
  * Represents a rectangle positioned in 2D-space
@@ -67,10 +67,10 @@ public interface PositionedRectangle extends Animatable<PositionedRectangle> {
     @Override
     default PositionedRectangle interpolate(PositionedRectangle next, float delta) {
         return PositionedRectangle.of(
-                (int) MathHelper.lerp(delta, this.x(), next.x()),
-                (int) MathHelper.lerp(delta, this.y(), next.y()),
-                (int) MathHelper.lerp(delta, this.width(), next.width()),
-                (int) MathHelper.lerp(delta, this.height(), next.height())
+                (int) Mth.lerpInt(delta, this.x(), next.x()),
+                (int) Mth.lerpInt(delta, this.y(), next.y()),
+                (int) Mth.lerpInt(delta, this.width(), next.width()),
+                (int) Mth.lerpInt(delta, this.height(), next.height())
         );
     }
 

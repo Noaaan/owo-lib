@@ -4,17 +4,16 @@ import io.wispforest.owo.ui.component.*;
 import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.Sizing;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.InvalidIdentifierException;
 import org.jetbrains.annotations.ApiStatus;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
+import org.w3c.dom.NodeList;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import net.minecraft.ResourceLocationException;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * A utility class containing the component factory registry
@@ -26,7 +25,7 @@ public class UIParsing {
 
     /**
      * @deprecated In order to more properly separate factories added by different
-     * mods, use {@link #registerFactory(Identifier, Function)}, which takes an
+     * mods, use {@link #registerFactory(ResourceLocation, Function)}, which takes an
      * identifier instead
      */
     @ApiStatus.Internal
@@ -48,7 +47,7 @@ public class UIParsing {
      *                    as the tag name for which this factory gets invoked
      * @param factory     The factory to register
      */
-    public static void registerFactory(Identifier componentId, Function<Element, Component> factory) {
+    public static void registerFactory(ResourceLocation componentId, Function<Element, Component> factory) {
         registerFactory(componentId.getNamespace() + "." + componentId.getPath(), factory);
     }
 
@@ -185,10 +184,10 @@ public class UIParsing {
      * @throws UIModelParsingException If the text content does not
      *                                 represent a valid identifier
      */
-    public static Identifier parseIdentifier(Node node) {
+    public static ResourceLocation parseIdentifier(Node node) {
         try {
-            return new Identifier(node.getTextContent().strip());
-        } catch (InvalidIdentifierException exception) {
+            return new ResourceLocation(node.getTextContent().strip());
+        } catch (ResourceLocationException exception) {
             throw new UIModelParsingException("Invalid identifier '" + node.getTextContent() + "'", exception);
         }
     }
@@ -200,10 +199,10 @@ public class UIParsing {
      * interpreted as a translation key - otherwise it is
      * returned literally
      */
-    public static Text parseText(Element element) {
+    public static net.minecraft.network.chat.Component parseText(Element element) {
         return element.getAttribute("translate").equalsIgnoreCase("true")
-                ? Text.translatable(element.getTextContent())
-                : Text.literal(element.getTextContent());
+                ? net.minecraft.network.chat.Component.translatable(element.getTextContent())
+                : net.minecraft.network.chat.Component.literal(element.getTextContent());
     }
 
     public static <E extends Enum<E>> Function<Element, E> parseEnum(Class<E> enumClass) {
@@ -309,10 +308,10 @@ public class UIParsing {
         registerFactory("block", BlockComponent::parse);
 
         // Widgets
-        registerFactory("label", element -> Components.label(Text.empty()));
+        registerFactory("label", element -> Components.label(net.minecraft.network.chat.Component.empty()));
         registerFactory("box", element -> Components.box(Sizing.content(), Sizing.content()));
-        registerFactory("button", element -> Components.button(Text.empty(), (ButtonComponent button) -> {}));
-        registerFactory("checkbox", element -> Components.checkbox(Text.empty()));
+        registerFactory("button", element -> Components.button(net.minecraft.network.chat.Component.empty(), (ButtonComponent button) -> {}));
+        registerFactory("checkbox", element -> Components.checkbox(net.minecraft.network.chat.Component.empty()));
         registerFactory("text-box", element -> Components.textBox(Sizing.content()));
         registerFactory("text-area", element -> Components.textArea(Sizing.content(), Sizing.content()));
         registerFactory("slider", element -> Components.slider(Sizing.content()));

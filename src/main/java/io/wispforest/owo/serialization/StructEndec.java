@@ -1,13 +1,14 @@
 package io.wispforest.owo.serialization;
 
 import com.mojang.serialization.*;
+import io.wispforest.owo.serialization.Serializer.Struct;
 import io.wispforest.owo.serialization.format.edm.*;
-import net.minecraft.util.Util;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import net.minecraft.Util;
 
 /**
  * Marker and template interface for all endecs which serialize structs
@@ -46,7 +47,7 @@ public interface StructEndec<T> extends Endec<T> {
                     var map = new HashMap<String, EdmElement<?>>();
                     input.entries().forEach(pair -> {
                         map.put(
-                                Util.getResult(
+                                Util.getOrThrow(
                                         ops.getStringValue(pair.getFirst()),
                                         s -> new IllegalStateException("Unable to parse key: " + s)
                                 ),

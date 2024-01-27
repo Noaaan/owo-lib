@@ -1,12 +1,8 @@
 package io.wispforest.owo.mixin.ui;
 
+import com.mojang.blaze3d.platform.Window;
 import io.wispforest.owo.ui.event.WindowResizeCallback;
 import io.wispforest.owo.ui.util.DisposableScreen;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.Window;
-import net.minecraft.util.crash.CrashException;
-import net.minecraft.util.crash.CrashReport;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,8 +14,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashSet;
 import java.util.Set;
+import net.minecraft.CrashReport;
+import net.minecraft.ReportedException;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public class MinecraftClientMixin {
 
     @Unique
@@ -31,19 +31,19 @@ public class MinecraftClientMixin {
 
     @Shadow
     @Nullable
-    public Screen currentScreen;
+    public Screen screen;
 
-    @Inject(method = "onResolutionChanged", at = @At("TAIL"))
+    @Inject(method = "resizeDisplay", at = @At("TAIL"))
     private void captureResize(CallbackInfo ci) {
-        WindowResizeCallback.EVENT.invoker().onResized((MinecraftClient) (Object) this, this.window);
+        WindowResizeCallback.EVENT.invoker().onResized((Minecraft) (Object) this, this.window);
     }
 
-    @Inject(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/Screen;removed()V"))
+    @Inject(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screens/Screen;removed()V"))
     private void captureSetScreen(Screen screen, CallbackInfo ci) {
-        if (screen != null && this.currentScreen instanceof DisposableScreen disposable) {
+        if (screen != null && this.screen instanceof DisposableScreen disposable) {
             this.screensToDispose.add(disposable);
         } else if (screen == null) {
-            if (this.currentScreen instanceof DisposableScreen disposable) {
+            if (this.screen instanceof DisposableScreen disposable) {
                 this.screensToDispose.add(disposable);
             }
 
@@ -52,12 +52,12 @@ public class MinecraftClientMixin {
                     disposable.dispose();
                 } catch (Throwable error) {
                     var report = new CrashReport("Failed to dispose screen", error);
-                    report.addElement("Screen being disposed: ")
-                            .add("Screen class", disposable.getClass())
-                            .add("Screen being closed", this.currentScreen)
-                            .add("Total screens to dispose", this.screensToDispose.size());
+                    report.addCategory("Screen being disposed: ")
+                            .setDetail("Screen class", disposable.getClass())
+                            .setDetail("Screen being closed", this.screen)
+                            .setDetail("Total screens to dispose", this.screensToDispose.size());
 
-                    throw new CrashException(report);
+                    throw new ReportedException(report);
                 }
             }
 

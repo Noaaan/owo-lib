@@ -5,30 +5,31 @@ import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIParsing;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
 import org.w3c.dom.Element;
 
 import java.util.Map;
 import java.util.function.Function;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 
-public class SliderComponent extends SliderWidget {
+public class SliderComponent extends AbstractSliderButton {
 
     protected final EventStream<OnChanged> changedEvents = OnChanged.newStream();
     protected final EventStream<OnSlideEnd> slideEndEvents = OnSlideEnd.newStream();
 
-    protected Function<String, Text> messageProvider = value -> Text.empty();
+    protected Function<String, Component> messageProvider = value -> Component.empty();
     protected double scrollStep = .05;
 
     protected SliderComponent(Sizing horizontalSizing) {
-        super(0, 0, 0, 0, Text.empty(), 0);
+        super(0, 0, 0, 0, Component.empty(), 0);
 
         this.sizing(horizontalSizing, Sizing.fixed(20));
     }
 
     public SliderComponent value(double value) {
-        value = MathHelper.clamp(value, 0, 1);
+        value = Mth.clamp(value, 0, 1);
 
         if (this.value != value) {
             this.value = value;
@@ -44,7 +45,7 @@ public class SliderComponent extends SliderWidget {
         return this.value;
     }
 
-    public SliderComponent message(Function<String, Text> messageProvider) {
+    public SliderComponent message(Function<String, Component> messageProvider) {
         this.messageProvider = messageProvider;
         this.updateMessage();
         return this;
@@ -122,9 +123,9 @@ public class SliderComponent extends SliderWidget {
             var content = node.getTextContent().strip();
 
             if (node.getAttribute("translate").equalsIgnoreCase("true")) {
-                this.message(value -> Text.translatable(content, value));
+                this.message(value -> Component.translatable(content, value));
             } else {
-                var text = Text.literal(content);
+                var text = Component.literal(content);
                 this.message(value -> text);
             }
         }
@@ -139,7 +140,7 @@ public class SliderComponent extends SliderWidget {
      */
     @Override
     @Deprecated
-    public final void setMessage(Text message) {
+    public final void setMessage(Component message) {
         super.setMessage(message);
     }
 

@@ -5,6 +5,7 @@ import io.wispforest.owo.serialization.util.RecursiveDeserializer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class EdmDeserializer extends RecursiveDeserializer<EdmElement<?>> implements SelfDescribedDeserializer<EdmElement<?>> {
 
@@ -106,17 +107,17 @@ public class EdmDeserializer extends RecursiveDeserializer<EdmElement<?>> implem
 
     @Override
     public <E> Deserializer.Sequence<E> sequence(Endec<E> elementEndec) {
-        return new Sequence<>(elementEndec, this.getValue().cast());
+        return new io.wispforest.owo.serialization.format.edm.EdmDeserializer.Sequence<>(elementEndec, this.getValue().cast());
     }
 
     @Override
     public <V> Deserializer.Map<V> map(Endec<V> valueEndec) {
-        return new Map<>(valueEndec, this.getValue().cast());
+        return new io.wispforest.owo.serialization.format.edm.EdmDeserializer.Map<>(valueEndec, this.getValue().cast());
     }
 
     @Override
     public Deserializer.Struct struct() {
-        return new Struct(this.getValue().cast());
+        return new io.wispforest.owo.serialization.format.edm.EdmDeserializer.Struct(this.getValue().cast());
     }
 
     // ---

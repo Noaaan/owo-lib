@@ -2,10 +2,9 @@ package io.wispforest.owo.offline;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import java.util.Map;
 import java.util.UUID;
 
@@ -28,7 +27,7 @@ public interface DataSavedEvents {
     });
 
     interface PlayerData {
-        void onSaved(UUID playerUuid, NbtCompound newTag);
+        void onSaved(UUID playerUuid, CompoundTag newTag);
     }
 
     /**
@@ -41,6 +40,6 @@ public interface DataSavedEvents {
     });
 
     interface Advancements {
-        void onSaved(UUID playerUuid, Map<Identifier, AdvancementProgress> newMap);
+        void onSaved(UUID playerUuid, Map<ResourceLocation, AdvancementProgress> newMap);
     }
 }

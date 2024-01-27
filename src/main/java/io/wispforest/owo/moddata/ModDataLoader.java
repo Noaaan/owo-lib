@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.wispforest.owo.Owo;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public final class ModDataLoader {
      * @param consumer The consumer to load data for
      */
     public static void load(ModDataConsumer consumer) {
-        Map<Identifier, JsonObject> foundFiles = new HashMap<>();
+        Map<ResourceLocation, JsonObject> foundFiles = new HashMap<>();
 
         FabricLoader.getInstance().getAllMods().forEach(modContainer -> {
             final var targetPath = modContainer.getRootPath().resolve(String.format("data/%s/%s", modContainer.getMetadata().getId(), consumer.getDataSubdirectory()));
@@ -59,7 +59,7 @@ public final class ModDataLoader {
         foundFiles.forEach(consumer::acceptParsedFile);
     }
 
-    private static void tryLoadFilesFrom(Map<Identifier, JsonObject> foundFiles, String namespace, Path targetPath) {
+    private static void tryLoadFilesFrom(Map<ResourceLocation, JsonObject> foundFiles, String namespace, Path targetPath) {
         try {
             if (!Files.exists(targetPath)) return;
             Files.walk(targetPath).forEach(path -> {
@@ -67,7 +67,7 @@ public final class ModDataLoader {
                 try {
                     final InputStreamReader tabData = new InputStreamReader(Files.newInputStream(path));
 
-                    foundFiles.put(new Identifier(namespace, FilenameUtils.removeExtension(targetPath.relativize(path).toString())), GSON.fromJson(tabData, JsonObject.class));
+                    foundFiles.put(new ResourceLocation(namespace, FilenameUtils.removeExtension(targetPath.relativize(path).toString())), GSON.fromJson(tabData, JsonObject.class));
                 } catch (IOException e) {
                     Owo.LOGGER.warn("### Unable to open data file {} ++ Stacktrace below ###", path, e);
                     e.printStackTrace();

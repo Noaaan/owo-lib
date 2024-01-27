@@ -1,17 +1,17 @@
 package io.wispforest.owo.ops;
 
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootPool;
-import net.minecraft.loot.condition.RandomChanceLootCondition;
-import net.minecraft.loot.entry.ItemEntry;
-import net.minecraft.loot.entry.LootPoolEntry;
-import net.minecraft.loot.function.SetCountLootFunction;
-import net.minecraft.loot.function.SetNbtLootFunction;
-import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
-import net.minecraft.loot.provider.number.UniformLootNumberProvider;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.functions.SetNbtFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
@@ -26,7 +26,7 @@ public final class LootOps {
 
     private LootOps() {}
 
-    private static final Map<Identifier[], Supplier<LootPoolEntry>> ADDITIONS = new HashMap<>();
+    private static final Map<ResourceLocation[], Supplier<LootPoolEntryContainer>> ADDITIONS = new HashMap<>();
 
     /**
      * Injects a single item entry into the specified LootTable(s)
@@ -35,8 +35,8 @@ public final class LootOps {
      * @param chance       The chance for the item to actually generate
      * @param targetTables The LootTable(s) to inject into
      */
-    public static void injectItem(ItemConvertible item, float chance, Identifier... targetTables) {
-        ADDITIONS.put(targetTables, () -> ItemEntry.builder(item).conditionally(RandomChanceLootCondition.builder(chance)).build());
+    public static void injectItem(ItemLike item, float chance, ResourceLocation... targetTables) {
+        ADDITIONS.put(targetTables, () -> LootItem.lootTableItem(item).when(LootItemRandomChanceCondition.randomChance(chance)).build());
     }
 
     /**
@@ -49,10 +49,10 @@ public final class LootOps {
      * @param max          The maximum amount of items to generate
      * @param targetTables The LootTable(s) to inject into
      */
-    public static void injectItemWithCount(ItemConvertible item, float chance, int min, int max, Identifier... targetTables) {
-        ADDITIONS.put(targetTables, () -> ItemEntry.builder(item)
-                .conditionally(RandomChanceLootCondition.builder(chance))
-                .apply(SetCountLootFunction.builder(UniformLootNumberProvider.create(min, max)))
+    public static void injectItemWithCount(ItemLike item, float chance, int min, int max, ResourceLocation... targetTables) {
+        ADDITIONS.put(targetTables, () -> LootItem.lootTableItem(item)
+                .when(LootItemRandomChanceCondition.randomChance(chance))
+                .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)))
                 .build());
     }
 
@@ -64,11 +64,11 @@ public final class LootOps {
      * @param targetTables The LootTable(s) to inject into
      */
     @SuppressWarnings("deprecation")
-    public static void injectItemStack(ItemStack stack, float chance, Identifier... targetTables) {
-        ADDITIONS.put(targetTables, () -> ItemEntry.builder(stack.getItem())
-                .conditionally(RandomChanceLootCondition.builder(chance))
-                .apply(SetNbtLootFunction.builder(stack.getOrCreateNbt().copy()))
-                .apply(SetCountLootFunction.builder(ConstantLootNumberProvider.create(stack.getCount())))
+    public static void injectItemStack(ItemStack stack, float chance, ResourceLocation... targetTables) {
+        ADDITIONS.put(targetTables, () -> LootItem.lootTableItem(stack.getItem())
+                .when(LootItemRandomChanceCondition.randomChance(chance))
+                .apply(SetNbtFunction.setTag(stack.getOrCreateTag().copy()))
+                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(stack.getCount())))
                 .build());
     }
 
@@ -80,7 +80,7 @@ public final class LootOps {
      * @param predicates The identifiers to test against (this would be the targeted tables)
      * @return {@code true} if target matches any of the predicates
      */
-    public static boolean anyMatch(Identifier target, Identifier... predicates) {
+    public static boolean anyMatch(ResourceLocation target, ResourceLocation... predicates) {
         for (var predicate : predicates) if (target.equals(predicate)) return true;
         return false;
     }
@@ -89,7 +89,7 @@ public final class LootOps {
     public static void registerListener() {
         LootTableEvents.MODIFY.register((resourceManager, manager, id, tableBuilder, source) -> {
             ADDITIONS.forEach((identifiers, lootPoolEntrySupplier) -> {
-                if (anyMatch(id, identifiers)) tableBuilder.pool(LootPool.builder().with(lootPoolEntrySupplier.get()));
+                if (anyMatch(id, identifiers)) tableBuilder.withPool(LootPool.lootPool().with(lootPoolEntrySupplier.get()));
             });
         });
     }

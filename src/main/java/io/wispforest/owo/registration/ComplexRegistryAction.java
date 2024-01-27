@@ -1,11 +1,10 @@
 package io.wispforest.owo.registration;
 
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * An action to be executed by a {@link RegistryHelper} if and only if
@@ -15,23 +14,23 @@ import java.util.List;
  */
 public class ComplexRegistryAction {
 
-    private final List<Identifier> predicates;
+    private final List<ResourceLocation> predicates;
     private final Runnable action;
 
-    protected ComplexRegistryAction(List<Identifier> predicates, Runnable action) {
+    protected ComplexRegistryAction(List<ResourceLocation> predicates, Runnable action) {
         this.predicates = predicates;
         this.action = action;
     }
 
     protected <T> boolean preCheck(Registry<T> registry) {
-        predicates.removeIf(registry::containsId);
+        predicates.removeIf(registry::containsKey);
         if (!predicates.isEmpty()) return false;
 
         action.run();
         return true;
     }
 
-    protected boolean update(Identifier id, Collection<Runnable> actionList) {
+    protected boolean update(ResourceLocation id, Collection<Runnable> actionList) {
         predicates.remove(id);
         if (!predicates.isEmpty()) return false;
 
@@ -42,7 +41,7 @@ public class ComplexRegistryAction {
     public static class Builder {
 
         private final Runnable action;
-        private final List<Identifier> predicates;
+        private final List<ResourceLocation> predicates;
 
         private Builder(Runnable action) {
             this.action = action;
@@ -54,19 +53,19 @@ public class ComplexRegistryAction {
          * to a list of identifiers
          *
          * @param action The action to run once all identifiers are found in the targeted registry
-         * @see #entry(Identifier)
+         * @see #entry(ResourceLocation)
          * @see #entries(Collection)
          */
         public static Builder create(Runnable action) {
             return new Builder(action);
         }
 
-        public Builder entry(Identifier id) {
+        public Builder entry(ResourceLocation id) {
             this.predicates.add(id);
             return this;
         }
 
-        public Builder entries(Collection<Identifier> ids) {
+        public Builder entries(Collection<ResourceLocation> ids) {
             this.predicates.addAll(ids);
             return this;
         }

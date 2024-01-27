@@ -1,5 +1,6 @@
 package io.wispforest.owo.serialization.format.edm;
 
+import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import io.wispforest.owo.serialization.*;
 

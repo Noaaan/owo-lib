@@ -1,14 +1,19 @@
 package io.wispforest.owo.config;
 
 import blue.endless.jankson.Jankson;
+import blue.endless.jankson.Jankson.Builder;
 import blue.endless.jankson.JsonElement;
 import blue.endless.jankson.JsonGrammar;
+import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import blue.endless.jankson.api.DeserializationException;
 import blue.endless.jankson.api.SyntaxError;
 import blue.endless.jankson.impl.POJODeserializer;
 import blue.endless.jankson.magic.TypeMagic;
 import io.wispforest.owo.Owo;
+import io.wispforest.owo.config.Option.BoundField;
+import io.wispforest.owo.config.Option.Key;
+import io.wispforest.owo.config.Option.SyncMode;
 import io.wispforest.owo.config.annotation.*;
 import io.wispforest.owo.config.ui.ConfigScreen;
 import io.wispforest.owo.ui.core.Color;
@@ -17,18 +22,20 @@ import io.wispforest.owo.util.Observable;
 import io.wispforest.owo.util.ReflectionUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -65,8 +72,8 @@ public abstract class ConfigWrapper<C> {
         this.instance = ReflectionUtils.tryInstantiateWithNoArgs(clazz);
 
         var builder = Jankson.builder()
-                .registerSerializer(Identifier.class, (identifier, marshaller) -> new JsonPrimitive(identifier.toString()))
-                .registerDeserializer(JsonPrimitive.class, Identifier.class, (primitive, m) -> Identifier.tryParse(primitive.asString()))
+                .registerSerializer(ResourceLocation.class, (identifier, marshaller) -> new JsonPrimitive(identifier.toString()))
+                .registerDeserializer(JsonPrimitive.class, ResourceLocation.class, (primitive, m) -> ResourceLocation.tryParse(primitive.asString()))
                 .registerSerializer(Color.class, (color, marshaller) -> new JsonPrimitive(color.asHexString(true)))
                 .registerDeserializer(JsonPrimitive.class, Color.class, (primitive, m) -> Color.ofArgb(Integer.parseUnsignedInt(primitive.asString().substring(1), 16)));
         janksonBuilder.accept(builder);
@@ -84,7 +91,7 @@ public abstract class ConfigWrapper<C> {
             var modmenuAnnotation = clazz.getAnnotation(Modmenu.class);
             ConfigScreen.registerProvider(
                     modmenuAnnotation.modId(),
-                    screen -> ConfigScreen.createWithCustomModel(new Identifier(modmenuAnnotation.uiModelId()), this, screen)
+                    screen -> ConfigScreen.createWithCustomModel(new ResourceLocation(modmenuAnnotation.uiModelId()), this, screen)
             );
         }
 

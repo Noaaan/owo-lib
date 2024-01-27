@@ -1,7 +1,7 @@
 package io.wispforest.owo.mixin.tweaks;
 
+
 import com.mojang.logging.LogUtils;
-import net.minecraft.util.Util;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -9,12 +9,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.Util;
 
-@Mixin(value = Util.OperatingSystem.class)
+@Mixin(value = Util.OS.class)
 public abstract class OperatingSystemMixin {
 
     @Shadow
-    protected abstract String[] getURLOpenCommand(URL url);
+    protected abstract String[] getOpenUrlArguments(URL url);
 
     /**
      * @author glisco
@@ -25,10 +26,10 @@ public abstract class OperatingSystemMixin {
      * at opening the user's desired application 100% of the time
      */
     @Overwrite()
-    public void open(URL url) {
+    public void openUrl(URL url) {
         CompletableFuture.runAsync(() -> {
             try {
-                final var command = getURLOpenCommand(url);
+                final var command = getOpenUrlArguments(url);
                 new ProcessBuilder(command)
                         .redirectError(ProcessBuilder.Redirect.DISCARD)
                         .redirectOutput(ProcessBuilder.Redirect.DISCARD)
@@ -36,6 +37,6 @@ public abstract class OperatingSystemMixin {
             } catch (IOException e) {
                 LogUtils.getLogger().error("Couldn't open url '{}'", url, e);
             }
-        }, Util.getMainWorkerExecutor());
+        }, Util.backgroundExecutor());
     }
 }

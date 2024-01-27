@@ -1,5 +1,7 @@
 package io.wispforest.owo.serialization.format.json;
 
+
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -7,9 +9,11 @@ import com.google.gson.JsonPrimitive;
 import io.wispforest.owo.serialization.*;
 import io.wispforest.owo.serialization.util.RecursiveDeserializer;
 import org.jetbrains.annotations.Nullable;
-
+import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
@@ -115,17 +119,17 @@ public class JsonDeserializer extends RecursiveDeserializer<JsonElement> impleme
 
     @Override
     public <E> Deserializer.Sequence<E> sequence(Endec<E> elementEndec) {
-        return new Sequence<>(elementEndec, (JsonArray) this.getValue());
+        return new io.wispforest.owo.serialization.format.json.JsonDeserializer.Sequence<>(elementEndec, (JsonArray) this.getValue());
     }
 
     @Override
     public <V> Deserializer.Map<V> map(Endec<V> valueEndec) {
-        return new Map<>(valueEndec, ((JsonObject) this.getValue()));
+        return new io.wispforest.owo.serialization.format.json.JsonDeserializer.Map<>(valueEndec, ((JsonObject) this.getValue()));
     }
 
     @Override
     public Deserializer.Struct struct() {
-        return new Struct((JsonObject) this.getValue());
+        return new io.wispforest.owo.serialization.format.json.JsonDeserializer.Struct((JsonObject) this.getValue());
     }
 
     // ---

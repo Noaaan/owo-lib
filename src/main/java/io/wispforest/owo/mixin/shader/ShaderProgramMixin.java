@@ -1,15 +1,16 @@
 package io.wispforest.owo.mixin.shader;
 
+
 import io.wispforest.owo.shader.GlProgram;
-import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.renderer.ShaderInstance;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
-@Mixin(ShaderProgram.class)
+@Mixin(ShaderInstance.class)
 public class ShaderProgramMixin {
 
-    @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Identifier;<init>(Ljava/lang/String;)V"), require = 0)
+    @ModifyArg(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/resources/ResourceLocation;<init>(Ljava/lang/String;)V"), require = 0)
     private String fixIdentifier(String id) {
         if (!((Object) this instanceof GlProgram.OwoShaderProgram)) return id;
 

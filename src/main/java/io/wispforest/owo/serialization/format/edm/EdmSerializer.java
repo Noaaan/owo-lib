@@ -104,17 +104,17 @@ public class EdmSerializer extends RecursiveSerializer<EdmElement<?>> {
 
     @Override
     public <E> Serializer.Sequence<E> sequence(Endec<E> elementEndec, int size) {
-        return new Sequence<>(elementEndec);
+        return new io.wispforest.owo.serialization.format.edm.EdmSerializer.Sequence<>(elementEndec);
     }
 
     @Override
     public <V> Serializer.Map<V> map(Endec<V> valueEndec, int size) {
-        return new Map<>(valueEndec);
+        return new io.wispforest.owo.serialization.format.edm.EdmSerializer.Map<>(valueEndec);
     }
 
     @Override
     public Serializer.Struct struct() {
-        return new Struct();
+        return new io.wispforest.owo.serialization.format.edm.EdmSerializer.Struct();
     }
 
     // ---

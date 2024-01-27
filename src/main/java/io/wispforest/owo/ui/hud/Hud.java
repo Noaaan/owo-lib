@@ -1,12 +1,13 @@
 package io.wispforest.owo.ui.hud;
 
+import com.mojang.blaze3d.platform.Window;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Component;
 import io.wispforest.owo.ui.core.OwoUIAdapter;
 import io.wispforest.owo.ui.event.WindowResizeCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -24,9 +25,9 @@ public class Hud {
     static @Nullable OwoUIAdapter<FlowLayout> adapter = null;
     static boolean suppress = false;
 
-    private static final Map<Identifier, Component> activeComponents = new HashMap<>();
-    private static final Map<Identifier, Supplier<Component>> pendingComponents = new HashMap<>();
-    private static final Set<Identifier> pendingRemovals = new HashSet<>();
+    private static final Map<ResourceLocation, Component> activeComponents = new HashMap<>();
+    private static final Map<ResourceLocation, Supplier<Component>> pendingComponents = new HashMap<>();
+    private static final Set<ResourceLocation> pendingRemovals = new HashSet<>();
 
     /**
      * Add a new component to be rendered on the in-game HUD.
@@ -39,7 +40,7 @@ public class Hud {
      * @param component A function creating the component
      *                  when the HUD is first rendered
      */
-    public static void add(Identifier id, Supplier<Component> component) {
+    public static void add(ResourceLocation id, Supplier<Component> component) {
         pendingComponents.put(id, component);
     }
 
@@ -48,7 +49,7 @@ public class Hud {
      *
      * @param id The ID of the HUD component to remove
      */
-    public static void remove(Identifier id) {
+    public static void remove(ResourceLocation id) {
         pendingRemovals.add(id);
     }
 
@@ -58,21 +59,21 @@ public class Hud {
      * @param id The ID of the HUD component to query
      * @return The relevant HUD component, or {@code null} if there is none
      */
-    public static @Nullable Component getComponent(Identifier id) {
+    public static @Nullable Component getComponent(ResourceLocation id) {
         return activeComponents.get(id);
     }
 
     /**
      * @return {@code true} if there is an active HUD component described by {@code id}
      */
-    public static boolean hasComponent(Identifier id) {
+    public static boolean hasComponent(ResourceLocation id) {
         return activeComponents.containsKey(id);
     }
 
     private static void initializeAdapter() {
-        var window = MinecraftClient.getInstance().getWindow();
+        var window = Minecraft.getInstance().getWindow();
         adapter = OwoUIAdapter.createWithoutScreen(
-                0, 0, window.getScaledWidth(), window.getScaledHeight(), HudContainer::new
+                0, 0, window.getGuiScaledWidth(), window.getGuiScaledHeight(), HudContainer::new
         );
 
         adapter.inflateAndMount();
@@ -81,7 +82,7 @@ public class Hud {
     static {
         WindowResizeCallback.EVENT.register((client, window) -> {
             if (adapter == null) return;
-            adapter.moveAndResize(0, 0, window.getScaledWidth(), window.getScaledHeight());
+            adapter.moveAndResize(0, 0, window.getGuiScaledWidth(), window.getGuiScaledHeight());
         });
 
         HudRenderCallback.EVENT.register((context, tickDelta) -> {

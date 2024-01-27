@@ -2,29 +2,29 @@ package io.wispforest.owo.text;
 
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.endec.StructEndecBuilder;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
-
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.contents.TranslatableContents;
 
-public record InsertingTextContent(int index) implements TextContent {
+public record InsertingTextContent(int index) implements ComponentContents {
 
-    public static final TextContent.Type<InsertingTextContent> TYPE = new Type<>(
+    public static final ComponentContents.Type<InsertingTextContent> TYPE = new Type<>(
             StructEndecBuilder.of(Endec.INT.fieldOf("index", InsertingTextContent::index), InsertingTextContent::new).mapCodec(),
             "owo:insert"
     );
 
     @Override
-    public <T> Optional<T> visit(StringVisitable.Visitor<T> visitor) {
+    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> visitor) {
         var current = TranslationContext.getCurrent();
 
         if (current == null || current.getArgs().length <= index) {return visitor.accept("%" + (index + 1) + "$s");}
 
         Object arg = current.getArgs()[index];
 
-        if (arg instanceof Text text) {
+        if (arg instanceof Component text) {
             return text.visit(visitor);
         } else {
             return visitor.accept(arg.toString());
@@ -32,7 +32,7 @@ public record InsertingTextContent(int index) implements TextContent {
     }
 
     @Override
-    public <T> Optional<T> visit(StringVisitable.StyledVisitor<T> visitor, Style style) {
+    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> visitor, Style style) {
         var current = TranslationContext.getCurrent();
 
         if (current == null || current.getArgs().length <= index) {
@@ -41,7 +41,7 @@ public record InsertingTextContent(int index) implements TextContent {
 
         Object arg = current.getArgs()[index];
 
-        if (arg instanceof Text text) {
+        if (arg instanceof Component text) {
             return text.visit(visitor, style);
         } else {
             return visitor.accept(style, arg.toString());
@@ -49,7 +49,7 @@ public record InsertingTextContent(int index) implements TextContent {
     }
 
     @Override
-    public Type<?> getType() {
+    public Type<?> type() {
         return TYPE;
     }
 }

@@ -1,5 +1,6 @@
 package io.wispforest.owo.serialization.endec;
 
+
 import io.wispforest.owo.network.serialization.SealedPolymorphic;
 import io.wispforest.owo.serialization.Deserializer;
 import io.wispforest.owo.serialization.Endec;
@@ -9,16 +10,20 @@ import io.wispforest.owo.serialization.format.nbt.NbtEndec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -225,7 +230,7 @@ public class ReflectiveEndecBuilder {
         register(Endec.STRING, String.class);
         register(BuiltInEndecs.UUID, UUID.class);
         register(BuiltInEndecs.DATE, Date.class);
-        register(BuiltInEndecs.PACKET_BYTE_BUF, PacketByteBuf.class);
+        register(BuiltInEndecs.PACKET_BYTE_BUF, FriendlyByteBuf.class);
 
         // --------
         // MC Types
@@ -234,8 +239,8 @@ public class ReflectiveEndecBuilder {
         register(BuiltInEndecs.BLOCK_POS, BlockPos.class);
         register(BuiltInEndecs.CHUNK_POS, ChunkPos.class);
         register(BuiltInEndecs.ITEM_STACK, ItemStack.class);
-        register(BuiltInEndecs.IDENTIFIER, Identifier.class);
-        register(NbtEndec.COMPOUND, NbtCompound.class);
+        register(BuiltInEndecs.IDENTIFIER, ResourceLocation.class);
+        register(NbtEndec.COMPOUND, CompoundTag.class);
         register(
                 new StructEndec<>() {
                     final Endec<Direction> DIRECTION = Endec.forEnum(Direction.class);
@@ -244,13 +249,13 @@ public class ReflectiveEndecBuilder {
                     public void encodeStruct(Serializer.Struct struct, BlockHitResult hitResult) {
                         BlockPos blockPos = hitResult.getBlockPos();
                         struct.field("blockPos", BuiltInEndecs.BLOCK_POS, blockPos)
-                                .field("side", DIRECTION, hitResult.getSide());
+                                .field("side", DIRECTION, hitResult.getDirection());
 
-                        Vec3d vec3d = hitResult.getPos();
+                        Vec3 vec3d = hitResult.getLocation();
                         struct.field("x", Endec.FLOAT, (float) (vec3d.x - (double) blockPos.getX()))
                                 .field("y", Endec.FLOAT, (float) (vec3d.x - (double) blockPos.getX()))
                                 .field("z", Endec.FLOAT, (float) (vec3d.x - (double) blockPos.getX()))
-                                .field("inside", Endec.BOOLEAN, hitResult.isInsideBlock());
+                                .field("inside", Endec.BOOLEAN, hitResult.isInside());
                     }
 
                     @Override
@@ -264,33 +269,33 @@ public class ReflectiveEndecBuilder {
 
                         boolean bl = struct.field("inside", Endec.BOOLEAN);
                         return new BlockHitResult(
-                                new Vec3d((double) blockPos.getX() + (double) f, (double) blockPos.getY() + (double) g, (double) blockPos.getZ() + (double) h), direction, blockPos, bl
+                                new Vec3((double) blockPos.getX() + (double) f, (double) blockPos.getY() + (double) g, (double) blockPos.getZ() + (double) h), direction, blockPos, bl
                         );
                     }
                 },
                 BlockHitResult.class
         );
         register(BuiltInEndecs.BITSET, BitSet.class);
-        register(BuiltInEndecs.TEXT, Text.class);
+        register(BuiltInEndecs.TEXT, Component.class);
 
         register(BuiltInEndecs.PACKET_BYTE_BUF.xmap(
                 byteBuf -> {
                     //noinspection rawtypes
-                    final ParticleType particleType = Registries.PARTICLE_TYPE.get(byteBuf.readInt());
+                    final ParticleType particleType = BuiltInRegistries.PARTICLE_TYPE.byId(byteBuf.readInt());
                     //noinspection unchecked, ConstantConditions
 
-                    return particleType.getParametersFactory().read(particleType, byteBuf);
+                    return particleType.getDeserializer().fromNetwork(particleType, byteBuf);
                 },
                 particleEffect -> {
-                    PacketByteBuf buf = PacketByteBufs.create();
-                    buf.writeInt(Registries.PARTICLE_TYPE.getRawId(particleEffect.getType()));
-                    particleEffect.write(buf);
+                    FriendlyByteBuf buf = PacketByteBufs.create();
+                    buf.writeInt(BuiltInRegistries.PARTICLE_TYPE.getId(particleEffect.getType()));
+                    particleEffect.writeToNetwork(buf);
 
                     return buf;
                 }
-        ), ParticleEffect.class);
+        ), ParticleOptions.class);
 
-        register(BuiltInEndecs.VEC3D, Vec3d.class);
+        register(BuiltInEndecs.VEC3D, Vec3.class);
         register(BuiltInEndecs.VECTOR3F, Vector3f.class);
         register(BuiltInEndecs.VEC3I, Vec3i.class);
     }

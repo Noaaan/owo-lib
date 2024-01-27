@@ -1,7 +1,7 @@
 package io.wispforest.owo.moddata;
 
 import com.google.gson.JsonObject;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * A class that can accept some JSON data loaded from a subdirectory
@@ -23,6 +23,6 @@ public interface ModDataConsumer {
      *
      * @param object The .json files parsed into {@code JsonObject}s
      */
-    void acceptParsedFile(Identifier id, JsonObject object);
+    void acceptParsedFile(ResourceLocation id, JsonObject object);
 
 }

@@ -7,21 +7,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implements SelfDescribedDeserializer<NbtElement> {
+public class NbtDeserializer extends RecursiveDeserializer<Tag> implements SelfDescribedDeserializer<Tag> {
 
     private static final Set<SerializationAttribute> ATTRIBUTES = EnumSet.of(
             SerializationAttribute.SELF_DESCRIBING
     );
 
-    protected NbtDeserializer(NbtElement element) {
+    protected NbtDeserializer(Tag element) {
         super(element);
     }
 
-    public static NbtDeserializer of(NbtElement element) {
+    public static NbtDeserializer of(Tag element) {
         return new NbtDeserializer(element);
     }
 
-    private <N extends NbtElement> N getAs(NbtElement element, Class<N> clazz) {
+    private <N extends Tag> N getAs(Tag element, Class<N> clazz) {
         if (clazz.isInstance(element)) {
             return clazz.cast(element);
         } else {
@@ -40,61 +40,61 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
 
     @Override
     public byte readByte() {
-        return this.getAs(this.getValue(), NbtByte.class).byteValue();
+        return this.getAs(this.getValue(), ByteTag.class).getAsByte();
     }
 
     @Override
     public short readShort() {
-        return this.getAs(this.getValue(), NbtShort.class).shortValue();
+        return this.getAs(this.getValue(), ShortTag.class).getAsShort();
     }
 
     @Override
     public int readInt() {
-        return this.getAs(this.getValue(), NbtInt.class).intValue();
+        return this.getAs(this.getValue(), IntTag.class).getAsInt();
     }
 
     @Override
     public long readLong() {
-        return this.getAs(this.getValue(), NbtLong.class).longValue();
+        return this.getAs(this.getValue(), LongTag.class).getAsLong();
     }
 
     @Override
     public float readFloat() {
-        return this.getAs(this.getValue(), NbtFloat.class).floatValue();
+        return this.getAs(this.getValue(), FloatTag.class).getAsFloat();
     }
 
     @Override
     public double readDouble() {
-        return this.getAs(this.getValue(), NbtDouble.class).doubleValue();
+        return this.getAs(this.getValue(), DoubleTag.class).getAsDouble();
     }
 
     // ---
 
     @Override
     public int readVarInt() {
-        return this.getAs(this.getValue(), AbstractNbtNumber.class).intValue();
+        return this.getAs(this.getValue(), NumericTag.class).getAsInt();
     }
 
     @Override
     public long readVarLong() {
-        return this.getAs(this.getValue(), AbstractNbtNumber.class).longValue();
+        return this.getAs(this.getValue(), NumericTag.class).getAsLong();
     }
 
     // ---
 
     @Override
     public boolean readBoolean() {
-        return this.getAs(this.getValue(), NbtByte.class).byteValue() != 0;
+        return this.getAs(this.getValue(), ByteTag.class).getAsByte() != 0;
     }
 
     @Override
     public String readString() {
-        return this.getAs(this.getValue(), NbtString.class).asString();
+        return this.getAs(this.getValue(), StringTag.class).getAsString();
     }
 
     @Override
     public byte[] readBytes() {
-        return this.getAs(this.getValue(), NbtByteArray.class).getByteArray();
+        return this.getAs(this.getValue(), ByteArrayTag.class).getAsByteArray();
     }
 
     @Override
@@ -114,17 +114,17 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
     @Override
     public <E> Deserializer.Sequence<E> sequence(Endec<E> elementEndec) {
         //noinspection unchecked
-        return new Sequence<>(elementEndec, this.getAs(this.getValue(), AbstractNbtList.class));
+        return new io.wispforest.owo.serialization.format.nbt.NbtDeserializer.Sequence<>(elementEndec, this.getAs(this.getValue(), CollectionTag.class));
     }
 
     @Override
     public <V> Deserializer.Map<V> map(Endec<V> valueEndec) {
-        return new Map<>(valueEndec, this.getAs(this.getValue(), NbtCompound.class));
+        return new io.wispforest.owo.serialization.format.nbt.NbtDeserializer.Map<>(valueEndec, this.getAs(this.getValue(), CompoundTag.class));
     }
 
     @Override
     public Deserializer.Struct struct() {
-        return new Struct(this.getAs(this.getValue(), NbtCompound.class));
+        return new io.wispforest.owo.serialization.format.nbt.NbtDeserializer.Struct(this.getAs(this.getValue(), CompoundTag.class));
     }
 
     // ---
@@ -134,26 +134,26 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
         this.decodeValue(visitor, this.getValue());
     }
 
-    private <S> void decodeValue(Serializer<S> visitor, NbtElement value) {
-        switch (value.getType()) {
-            case NbtElement.BYTE_TYPE -> visitor.writeByte(((NbtByte) value).byteValue());
-            case NbtElement.SHORT_TYPE -> visitor.writeShort(((NbtShort) value).shortValue());
-            case NbtElement.INT_TYPE -> visitor.writeInt(((NbtInt) value).intValue());
-            case NbtElement.LONG_TYPE -> visitor.writeLong(((NbtLong) value).longValue());
-            case NbtElement.FLOAT_TYPE -> visitor.writeFloat(((NbtFloat) value).floatValue());
-            case NbtElement.DOUBLE_TYPE -> visitor.writeDouble(((NbtDouble) value).doubleValue());
-            case NbtElement.STRING_TYPE -> visitor.writeString(value.asString());
-            case NbtElement.BYTE_ARRAY_TYPE -> visitor.writeBytes(((NbtByteArray) value).getByteArray());
-            case NbtElement.INT_ARRAY_TYPE, NbtElement.LONG_ARRAY_TYPE, NbtElement.LIST_TYPE -> {
-                var list = (AbstractNbtList<?>) value;
-                try (var sequence = visitor.sequence(Endec.<NbtElement>of(this::decodeValue, deserializer -> null), list.size())) {
+    private <S> void decodeValue(Serializer<S> visitor, Tag value) {
+        switch (value.getId()) {
+            case Tag.TAG_BYTE -> visitor.writeByte(((ByteTag) value).getAsByte());
+            case Tag.TAG_SHORT -> visitor.writeShort(((ShortTag) value).getAsShort());
+            case Tag.TAG_INT -> visitor.writeInt(((IntTag) value).getAsInt());
+            case Tag.TAG_LONG -> visitor.writeLong(((LongTag) value).getAsLong());
+            case Tag.TAG_FLOAT -> visitor.writeFloat(((FloatTag) value).getAsFloat());
+            case Tag.TAG_DOUBLE -> visitor.writeDouble(((DoubleTag) value).getAsDouble());
+            case Tag.TAG_STRING -> visitor.writeString(value.getAsString());
+            case Tag.TAG_BYTE_ARRAY -> visitor.writeBytes(((ByteArrayTag) value).getAsByteArray());
+            case Tag.TAG_INT_ARRAY, Tag.TAG_LONG_ARRAY, Tag.TAG_LIST -> {
+                var list = (CollectionTag<?>) value;
+                try (var sequence = visitor.sequence(Endec.<Tag>of(this::decodeValue, deserializer -> null), list.size())) {
                     list.forEach(sequence::element);
                 }
             }
-            case NbtElement.COMPOUND_TYPE -> {
-                var compound = (NbtCompound) value;
-                try (var map = visitor.map(Endec.<NbtElement>of(this::decodeValue, deserializer -> null), compound.getSize())) {
-                    for (var key : compound.getKeys()) {
+            case Tag.TAG_COMPOUND -> {
+                var compound = (CompoundTag) value;
+                try (var map = visitor.map(Endec.<Tag>of(this::decodeValue, deserializer -> null), compound.size())) {
+                    for (var key : compound.getAllKeys()) {
                         map.entry(key, compound.get(key));
                     }
                 }
@@ -168,10 +168,10 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
     private class Sequence<V> implements Deserializer.Sequence<V> {
 
         private final Endec<V> valueEndec;
-        private final Iterator<NbtElement> elements;
+        private final Iterator<Tag> elements;
         private final int size;
 
-        private Sequence(Endec<V> valueEndec, List<NbtElement> elements) {
+        private Sequence(Endec<V> valueEndec, List<Tag> elements) {
             this.valueEndec = valueEndec;
 
             this.elements = elements.iterator();
@@ -201,16 +201,16 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
     private class Map<V> implements Deserializer.Map<V> {
 
         private final Endec<V> valueEndec;
-        private final NbtCompound compound;
+        private final CompoundTag compound;
         private final Iterator<String> keys;
         private final int size;
 
-        private Map(Endec<V> valueEndec, NbtCompound compound) {
+        private Map(Endec<V> valueEndec, CompoundTag compound) {
             this.valueEndec = valueEndec;
 
             this.compound = compound;
-            this.keys = compound.getKeys().iterator();
-            this.size = compound.getSize();
+            this.keys = compound.getAllKeys().iterator();
+            this.size = compound.size();
         }
 
         @Override
@@ -236,9 +236,9 @@ public class NbtDeserializer extends RecursiveDeserializer<NbtElement> implement
 
     public class Struct implements Deserializer.Struct {
 
-        private final NbtCompound compound;
+        private final CompoundTag compound;
 
-        public Struct(NbtCompound compound) {
+        public Struct(CompoundTag compound) {
             this.compound = compound;
         }
 

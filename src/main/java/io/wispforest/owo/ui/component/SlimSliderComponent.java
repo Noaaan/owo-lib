@@ -12,10 +12,6 @@ import io.wispforest.owo.ui.util.NinePatchTexture;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
 import io.wispforest.owo.util.Observable;
-import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Element;
 
@@ -24,13 +20,16 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 public class SlimSliderComponent extends BaseComponent {
 
-    public static final Function<Double, Text> VALUE_TOOLTIP_SUPPLIER = value -> Text.literal(String.valueOf(value));
+    public static final Function<Double, net.minecraft.network.chat.Component> VALUE_TOOLTIP_SUPPLIER = value -> net.minecraft.network.chat.Component.literal(String.valueOf(value));
 
-    protected static final Identifier TEXTURE = new Identifier("owo", "textures/gui/slim_slider.png");
-    protected static final Identifier TRACK_TEXTURE = new Identifier("owo", "slim_slider_track");
+    protected static final ResourceLocation TEXTURE = new ResourceLocation("owo", "textures/gui/slim_slider.png");
+    protected static final ResourceLocation TRACK_TEXTURE = new ResourceLocation("owo", "slim_slider_track");
 
     protected final EventStream<OnChanged> changedEvents = OnChanged.newStream();
     protected final EventStream<OnSlideEnd> slideEndEvents = OnSlideEnd.newStream();
@@ -40,7 +39,7 @@ public class SlimSliderComponent extends BaseComponent {
 
     protected double min = 0d, max = 1d;
     protected double stepSize = 0;
-    protected @Nullable Function<Double, Text> tooltipSupplier = null;
+    protected @Nullable Function<Double, net.minecraft.network.chat.Component> tooltipSupplier = null;
 
     public SlimSliderComponent(Axis axis) {
         this.cursorStyle(CursorStyle.MOVE);
@@ -74,10 +73,10 @@ public class SlimSliderComponent extends BaseComponent {
     public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
         if (this.axis == Axis.HORIZONTAL) {
             NinePatchTexture.draw(TRACK_TEXTURE, context, this.x + 1, this.y + 3, this.width - 2, 3);
-            context.drawTexture(TEXTURE, (int) (this.x + (this.width - 4) * this.value.get()), this.y + 1, 4, 7, 0, 3, 4, 7, 16, 16);
+            context.blit(TEXTURE, (int) (this.x + (this.width - 4) * this.value.get()), this.y + 1, 4, 7, 0, 3, 4, 7, 16, 16);
         } else {
             NinePatchTexture.draw(TRACK_TEXTURE, context, this.x + 3, this.y + 1, 3, this.height - 2);
-            context.drawTexture(TEXTURE, this.x + 1, (int) (this.y + (this.height - 4) * this.value.get()), 7, 4, 4, 3, 7, 4, 16, 16);
+            context.blit(TEXTURE, this.x + 1, (int) (this.y + (this.height - 4) * this.value.get()), 7, 4, 4, 3, 7, 4, 16, 16);
         }
     }
 
@@ -127,7 +126,7 @@ public class SlimSliderComponent extends BaseComponent {
             value = Math.round(value / this.stepSize) * this.stepSize;
         }
 
-        this.value.set(MathHelper.clamp(value / (this.max - this.min), 0, 1));
+        this.value.set(Mth.clamp(value / (this.max - this.min), 0, 1));
         return this;
     }
 
@@ -162,14 +161,14 @@ public class SlimSliderComponent extends BaseComponent {
         return stepSize;
     }
 
-    public SlimSliderComponent tooltipSupplier(Function<Double, Text> tooltipSupplier) {
+    public SlimSliderComponent tooltipSupplier(Function<Double, net.minecraft.network.chat.Component> tooltipSupplier) {
         this.tooltipSupplier = tooltipSupplier;
         this.updateTooltip();
 
         return this;
     }
 
-    public Function<Double, Text> tooltipSupplier() {
+    public Function<Double, net.minecraft.network.chat.Component> tooltipSupplier() {
         return tooltipSupplier;
     }
 
@@ -177,7 +176,7 @@ public class SlimSliderComponent extends BaseComponent {
         if (this.tooltipSupplier != null) {
             this.tooltip(this.tooltipSupplier.apply(this.value()));
         } else {
-            this.tooltip((List<TooltipComponent>) null);
+            this.tooltip((List<ClientTooltipComponent>) null);
         }
     }
 
@@ -197,8 +196,8 @@ public class SlimSliderComponent extends BaseComponent {
                 : new SlimSliderComponent(Axis.HORIZONTAL);
     }
 
-    public static Function<Double, Text> valueTooltipSupplier(int decimalPlaces) {
-        return value -> Text.literal(new BigDecimal(value).setScale(decimalPlaces, RoundingMode.HALF_UP).toPlainString());
+    public static Function<Double, net.minecraft.network.chat.Component> valueTooltipSupplier(int decimalPlaces) {
+        return value -> net.minecraft.network.chat.Component.literal(new BigDecimal(value).setScale(decimalPlaces, RoundingMode.HALF_UP).toPlainString());
     }
 
     public enum Axis {

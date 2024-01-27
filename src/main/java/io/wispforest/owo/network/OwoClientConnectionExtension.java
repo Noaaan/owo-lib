@@ -1,13 +1,13 @@
 package io.wispforest.owo.network;
 
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
 
 @ApiStatus.Internal
 public interface OwoClientConnectionExtension {
-    void owo$setChannelSet(Set<Identifier> channels);
+    void owo$setChannelSet(Set<ResourceLocation> channels);
 
-    Set<Identifier> owo$getChannelSet();
+    Set<ResourceLocation> owo$getChannelSet();
 }

@@ -117,17 +117,17 @@ public class JsonSerializer extends RecursiveSerializer<JsonElement> {
 
     @Override
     public <E> Serializer.Sequence<E> sequence(Endec<E> elementEndec, int size) {
-        return new Sequence<>(elementEndec, size);
+        return new io.wispforest.owo.serialization.format.json.JsonSerializer.Sequence<>(elementEndec, size);
     }
 
     @Override
     public <V> Serializer.Map<V> map(Endec<V> valueEndec, int size) {
-        return new Map<>(valueEndec);
+        return new io.wispforest.owo.serialization.format.json.JsonSerializer.Map<>(valueEndec);
     }
 
     @Override
     public Struct struct() {
-        return new Map<>(null);
+        return new io.wispforest.owo.serialization.format.json.JsonSerializer.Map<>(null);
     }
 
     // ---

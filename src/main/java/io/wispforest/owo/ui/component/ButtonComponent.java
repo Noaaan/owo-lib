@@ -11,48 +11,50 @@ import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIModelParsingException;
 import io.wispforest.owo.ui.parsing.UIParsing;
 import io.wispforest.owo.ui.util.NinePatchTexture;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.HoveredTooltipPositioner;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
-public class ButtonComponent extends ButtonWidget {
+public class ButtonComponent extends Button {
 
-    public static final Identifier ACTIVE_TEXTURE = new Identifier("owo", "button/active");
-    public static final Identifier HOVERED_TEXTURE = new Identifier("owo", "button/hovered");
-    public static final Identifier DISABLED_TEXTURE = new Identifier("owo", "button/disabled");
+    public static final ResourceLocation ACTIVE_TEXTURE = new ResourceLocation("owo", "button/active");
+    public static final ResourceLocation HOVERED_TEXTURE = new ResourceLocation("owo", "button/hovered");
+    public static final ResourceLocation DISABLED_TEXTURE = new ResourceLocation("owo", "button/disabled");
 
     protected Renderer renderer = Renderer.VANILLA;
     protected boolean textShadow = true;
 
-    protected ButtonComponent(Text message, Consumer<ButtonComponent> onPress) {
-        super(0, 0, 0, 0, message, button -> onPress.accept((ButtonComponent) button), ButtonWidget.DEFAULT_NARRATION_SUPPLIER);
+    protected ButtonComponent(Component message, Consumer<ButtonComponent> onPress) {
+        super(0, 0, 0, 0, message, button -> onPress.accept((ButtonComponent) button), Button.DEFAULT_NARRATION);
         this.sizing(Sizing.content());
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
         this.renderer.draw((OwoUIDrawContext) context, this, delta);
 
-        var textRenderer = MinecraftClient.getInstance().textRenderer;
+        var textRenderer = Minecraft.getInstance().font;
         int color = this.active ? 0xffffff : 0xa0a0a0;
 
         if (this.textShadow) {
-            context.drawCenteredTextWithShadow(textRenderer, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, color);
+            context.drawCenteredString(textRenderer, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, color);
         } else {
-            context.drawText(textRenderer, this.getMessage(), (int) (this.getX() + this.width / 2f - textRenderer.getWidth(this.getMessage()) / 2f), (int) (this.getY() + (this.height - 8) / 2f), color, false);
+            context.drawString(textRenderer, this.getMessage(), (int) (this.getX() + this.width / 2f - textRenderer.width(this.getMessage()) / 2f), (int) (this.getY() + (this.height - 8) / 2f), color, false);
         }
 
         var tooltip = ((ClickableWidgetAccessor) this).owo$getTooltip();
-        if (this.hovered && tooltip != null)
-            context.drawTooltip(textRenderer, tooltip.getLines(MinecraftClient.getInstance()), HoveredTooltipPositioner.INSTANCE, mouseX, mouseY);
+        if (this.isHovered && tooltip != null)
+            context.renderTooltip(textRenderer, tooltip.toCharSequence(Minecraft.getInstance()), DefaultTooltipPositioner.INSTANCE, mouseX, mouseY);
     }
 
     public ButtonComponent onPress(Consumer<ButtonComponent> onPress) {
@@ -105,7 +107,7 @@ public class ButtonComponent extends ButtonWidget {
             RenderSystem.enableDepthTest();
 
             var texture = button.active
-                    ? button.hovered ? HOVERED_TEXTURE : ACTIVE_TEXTURE
+                    ? button.isHovered ? HOVERED_TEXTURE : ACTIVE_TEXTURE
                     : DISABLED_TEXTURE;
             NinePatchTexture.draw(texture, matrices, button.getX(), button.getY(), button.width, button.height);
         };
@@ -115,7 +117,7 @@ public class ButtonComponent extends ButtonWidget {
                 RenderSystem.enableDepthTest();
 
                 if (button.active) {
-                    if (button.hovered) {
+                    if (button.isHovered) {
                         context.fill(button.getX(), button.getY(), button.getX() + button.width, button.getY() + button.height, hoveredColor);
                     } else {
                         context.fill(button.getX(), button.getY(), button.getX() + button.width, button.getY() + button.height, color);
@@ -126,7 +128,7 @@ public class ButtonComponent extends ButtonWidget {
             };
         }
 
-        static Renderer texture(Identifier texture, int u, int v, int textureWidth, int textureHeight) {
+        static Renderer texture(ResourceLocation texture, int u, int v, int textureWidth, int textureHeight) {
             return (context, button, delta) -> {
                 int renderV = v;
                 if (!button.active) {
@@ -136,7 +138,7 @@ public class ButtonComponent extends ButtonWidget {
                 }
 
                 RenderSystem.enableDepthTest();
-                context.drawTexture(texture, button.getX(), button.getY(), u, renderV, button.width, button.height, textureWidth, textureHeight);
+                context.blit(texture, button.getX(), button.getY(), u, renderV, button.width, button.height, textureWidth, textureHeight);
             };
         }
 

@@ -7,20 +7,21 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
 public class ScreenInternals {
-    public static final Identifier LOCAL_PACKET = new Identifier("owo", "local_packet");
-    public static final Identifier SYNC_PROPERTIES = new Identifier("owo", "sync_screen_handler_properties");
+    public static final ResourceLocation LOCAL_PACKET = new ResourceLocation("owo", "local_packet");
+    public static final ResourceLocation SYNC_PROPERTIES = new ResourceLocation("owo", "sync_screen_handler_properties");
 
     public static void init() {
         ServerPlayNetworking.registerGlobalReceiver(LOCAL_PACKET, (server, player, handler, buf, responseSender) -> {
             buf.retain();
             server.execute(() -> {
-                var screenHandler = player.currentScreenHandler;
+                var screenHandler = player.containerMenu;
 
                 if (screenHandler == null) {
                     Owo.LOGGER.error("Received local packet for null ScreenHandler");
@@ -37,8 +38,8 @@ public class ScreenInternals {
     public static class Client {
         public static void init() {
             ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-                if (screen instanceof HandledScreen<?> handled)
-                    ((OwoScreenHandlerExtension) handled.getScreenHandler()).owo$attachToPlayer(client.player);
+                if (screen instanceof AbstractContainerScreen<?> handled)
+                    ((OwoScreenHandlerExtension) handled.getMenu()).owo$attachToPlayer(client.player);
             });
 
             ClientPlayNetworking.registerGlobalReceiver(LOCAL_PACKET, (client, handler, buf, responseSender) -> {
@@ -46,7 +47,7 @@ public class ScreenInternals {
 
                 buf.retain();
                 client.execute(() -> {
-                    var screenHandler = client.player.currentScreenHandler;
+                    var screenHandler = client.player.containerMenu;
 
                     if (screenHandler == null) {
                         Owo.LOGGER.error("Received local packet for null ScreenHandler");
@@ -64,12 +65,12 @@ public class ScreenInternals {
                 client.execute(() -> {
                     if (client.player == null) return;
 
-                    if (client.player.currentScreenHandler == null) {
+                    if (client.player.containerMenu == null) {
                         Owo.LOGGER.error("Received sync properties packet for null ScreenHandler");
                         return;
                     }
 
-                    ((OwoScreenHandlerExtension) client.player.currentScreenHandler).owo$readPropertySync(buf);
+                    ((OwoScreenHandlerExtension) client.player.containerMenu).owo$readPropertySync(buf);
 
                     buf.release();
                 });

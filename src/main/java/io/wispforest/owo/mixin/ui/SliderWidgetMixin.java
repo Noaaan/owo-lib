@@ -3,9 +3,6 @@ package io.wispforest.owo.mixin.ui;
 import io.wispforest.owo.ui.component.DiscreteSliderComponent;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.core.CursorStyle;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,20 +12,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 
 @SuppressWarnings("ConstantConditions")
-@Mixin(SliderWidget.class)
-public abstract class SliderWidgetMixin extends ClickableWidget {
+@Mixin(AbstractSliderButton.class)
+public abstract class SliderWidgetMixin extends AbstractWidget {
     @Shadow
     protected abstract void setValue(double value);
 
     @Shadow protected double value;
 
-    public SliderWidgetMixin(int x, int y, int width, int height, Text message) {
+    public SliderWidgetMixin(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
     }
 
-    @ModifyArg(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/SliderWidget;setValue(D)V"))
+    @ModifyArg(method = "keyPressed", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/AbstractSliderButton;setValue(D)V"))
     private double injectCustomStep(double value) {
         if (!((Object) this instanceof SliderComponent slider)) return value;
         return this.value + Math.signum(value - this.value) * slider.scrollStep();

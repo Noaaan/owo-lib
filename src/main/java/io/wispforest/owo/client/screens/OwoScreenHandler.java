@@ -2,16 +2,16 @@ package io.wispforest.owo.client.screens;
 
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.endec.ReflectiveEndecBuilder;
-import net.minecraft.entity.player.PlayerEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
+import net.minecraft.world.entity.player.Player;
 
 public interface OwoScreenHandler {
 
     /**
      * Create a new property on this screen handler. This property can be updated serverside
-     * and will automatically synchronize to the client - think {@link net.minecraft.screen.PropertyDelegate}
+     * and will automatically synchronize to the client - think {@link net.minecraft.world.inventory.ContainerData}
      * but without being restricted to integers
      *
      * @param clazz   The class of the property's value
@@ -92,7 +92,7 @@ public interface OwoScreenHandler {
     /**
      * @return The player this screen handler is attached to
      */
-    default PlayerEntity player() {
+    default Player player() {
         throw new UnsupportedOperationException("Implemented in ScreenHandlerMixin");
     }
 }

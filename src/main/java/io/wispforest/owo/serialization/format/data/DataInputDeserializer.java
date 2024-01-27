@@ -1,5 +1,6 @@
 package io.wispforest.owo.serialization.format.data;
 
+
 import io.wispforest.owo.serialization.Deserializer;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
@@ -181,17 +182,17 @@ public class DataInputDeserializer implements Deserializer<DataInput> {
 
     @Override
     public <E> Deserializer.Sequence<E> sequence(Endec<E> elementEndec) {
-        return new Sequence<>(elementEndec, this.readVarInt());
+        return new io.wispforest.owo.serialization.format.data.DataInputDeserializer.Sequence<>(elementEndec, this.readVarInt());
     }
 
     @Override
     public <V> Deserializer.Map<V> map(Endec<V> valueEndec) {
-        return new Map<>(valueEndec, this.readVarInt());
+        return new io.wispforest.owo.serialization.format.data.DataInputDeserializer.Map<>(valueEndec, this.readVarInt());
     }
 
     @Override
     public Struct struct() {
-        return new Sequence<>(null, 0);
+        return new io.wispforest.owo.serialization.format.data.DataInputDeserializer.Sequence<>(null, 0);
     }
 
     // ---

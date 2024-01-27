@@ -1,9 +1,9 @@
 package io.wispforest.owo.mixin.tweaks;
 
 import io.wispforest.owo.Owo;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -11,17 +11,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(TextFieldWidget.class)
-public abstract class TextFieldWidgetMixin extends ClickableWidget {
+@Mixin(EditBox.class)
+public abstract class TextFieldWidgetMixin extends AbstractWidget {
 
     @Shadow
-    private String text;
+    private String value;
 
-    public TextFieldWidgetMixin(int x, int y, int width, int height, Text message) {
+    public TextFieldWidgetMixin(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
     }
 
-    @Inject(method = "getWordSkipPosition(IIZ)I", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getWordPosition(IIZ)I", at = @At("HEAD"), cancellable = true)
     private void iProvideUsefulSeparators(int wordOffset, int cursorPosition, boolean skipOverSpaces, CallbackInfoReturnable<Integer> cir) {
         if (!Owo.DEBUG) return;
 
@@ -31,10 +31,10 @@ public abstract class TextFieldWidgetMixin extends ClickableWidget {
         for (int i = 0; i < wordsToSkip; i++) {
             if (forward) {
                 cursorPosition++;
-                while (cursorPosition < this.text.length() && owo$isWordChar(this.text.charAt(cursorPosition))) cursorPosition++;
+                while (cursorPosition < this.value.length() && owo$isWordChar(this.value.charAt(cursorPosition))) cursorPosition++;
             } else {
                 cursorPosition--;
-                while (cursorPosition > 0 && owo$isWordChar(this.text.charAt(cursorPosition - 1))) cursorPosition--;
+                while (cursorPosition > 0 && owo$isWordChar(this.value.charAt(cursorPosition - 1))) cursorPosition--;
             }
         }
 

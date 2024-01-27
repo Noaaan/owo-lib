@@ -1,8 +1,8 @@
 package io.wispforest.owo.mixin.ui;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import io.wispforest.owo.util.pond.OwoBufferBuilderExtension;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.VertexFormat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +16,7 @@ public class BufferBuilderMixin implements OwoBufferBuilderExtension {
     private boolean owo$skipBegin = false;
 
     @Inject(method = "begin", at = @At("HEAD"), cancellable = true)
-    private void skipBegin(VertexFormat.DrawMode drawMode, VertexFormat format, CallbackInfo ci) {
+    private void skipBegin(VertexFormat.Mode drawMode, VertexFormat format, CallbackInfo ci) {
         if (!this.owo$skipBegin) return;
 
         this.owo$skipBegin = false;

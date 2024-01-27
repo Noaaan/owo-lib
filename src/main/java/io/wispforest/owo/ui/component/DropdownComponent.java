@@ -1,5 +1,6 @@
 package io.wispforest.owo.ui.component;
 
+
 import io.wispforest.owo.ui.base.BaseComponent;
 import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
@@ -8,14 +9,14 @@ import io.wispforest.owo.ui.parsing.UIModel;
 import io.wispforest.owo.ui.parsing.UIParsing;
 import io.wispforest.owo.ui.util.UISounds;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -23,7 +24,7 @@ import java.util.function.Function;
 
 public class DropdownComponent extends FlowLayout {
 
-    protected static final Identifier ICONS_TEXTURE = new Identifier("owo", "textures/gui/dropdown_icons.png");
+    protected static final ResourceLocation ICONS_TEXTURE = new ResourceLocation("owo", "textures/gui/dropdown_icons.png");
     protected final FlowLayout entries;
     protected boolean closeWhenNotHovered = false;
 
@@ -112,22 +113,22 @@ public class DropdownComponent extends FlowLayout {
         return this;
     }
 
-    public DropdownComponent text(Text text) {
-        this.entries.child(Components.label(text).color(Color.ofFormatting(Formatting.GRAY)).margins(Insets.of(2)));
+    public DropdownComponent text(net.minecraft.network.chat.Component text) {
+        this.entries.child(Components.label(text).color(Color.ofFormatting(ChatFormatting.GRAY)).margins(Insets.of(2)));
         return this;
     }
 
-    public DropdownComponent button(Text text, Consumer<DropdownComponent> onClick) {
+    public DropdownComponent button(net.minecraft.network.chat.Component text, Consumer<DropdownComponent> onClick) {
         this.entries.child(new Button(this, text, onClick).margins(Insets.of(2)));
         return this;
     }
 
-    public DropdownComponent checkbox(Text text, boolean state, Consumer<Boolean> onClick) {
+    public DropdownComponent checkbox(net.minecraft.network.chat.Component text, boolean state, Consumer<Boolean> onClick) {
         this.entries.child(new Checkbox(this, text, state, onClick).margins(Insets.of(2)));
         return this;
     }
 
-    public DropdownComponent nested(Text text, Sizing horizontalSizing, Consumer<DropdownComponent> builder) {
+    public DropdownComponent nested(net.minecraft.network.chat.Component text, Sizing horizontalSizing, Consumer<DropdownComponent> builder) {
         var nested = new DropdownComponent(horizontalSizing);
         builder.accept(nested);
         this.entries.child(new NestEntry(this, text, nested).margins(Insets.of(2)));
@@ -188,8 +189,8 @@ public class DropdownComponent extends FlowLayout {
                 }
                 case "nested" -> {
                     var text = entry.getAttribute("translate").equals("true")
-                            ? Text.translatable(entry.getAttribute("name"))
-                            : Text.literal(entry.getAttribute("name"));
+                            ? net.minecraft.network.chat.Component.translatable(entry.getAttribute("name"))
+                            : net.minecraft.network.chat.Component.literal(entry.getAttribute("name"));
                     this.nested(text, Sizing.content(), dropdownComponent -> dropdownComponent.parseAndApplyEntries(entry));
                 }
             }
@@ -197,7 +198,7 @@ public class DropdownComponent extends FlowLayout {
     }
 
     protected static void drawIconFromTexture(OwoUIDrawContext context, ParentComponent dropdown, int y, int u, int v) {
-        context.drawTexture(ICONS_TEXTURE,
+        context.blit(ICONS_TEXTURE,
                 dropdown.x() + dropdown.width() - dropdown.padding().get().right() - 10, y,
                 u, v,
                 9, 9,
@@ -237,7 +238,7 @@ public class DropdownComponent extends FlowLayout {
 
         private final DropdownComponent child;
 
-        protected NestEntry(DropdownComponent parentDropdown, Text text, DropdownComponent child) {
+        protected NestEntry(DropdownComponent parentDropdown, net.minecraft.network.chat.Component text, DropdownComponent child) {
             super(text);
             this.child = child;
 
@@ -270,7 +271,7 @@ public class DropdownComponent extends FlowLayout {
         protected final DropdownComponent parentDropdown;
         protected Consumer<DropdownComponent> onClick;
 
-        protected Button(DropdownComponent parentDropdown, Text text, Consumer<DropdownComponent> onClick) {
+        protected Button(DropdownComponent parentDropdown, net.minecraft.network.chat.Component text, Consumer<DropdownComponent> onClick) {
             super(text);
             this.onClick = onClick;
             this.parentDropdown = parentDropdown;
@@ -318,7 +319,7 @@ public class DropdownComponent extends FlowLayout {
 
         protected boolean state;
 
-        public Checkbox(DropdownComponent parentDropdown, Text text, boolean state, Consumer<Boolean> onClick) {
+        public Checkbox(DropdownComponent parentDropdown, net.minecraft.network.chat.Component text, boolean state, Consumer<Boolean> onClick) {
             super(parentDropdown, text, dropdownComponent -> {
             });
 

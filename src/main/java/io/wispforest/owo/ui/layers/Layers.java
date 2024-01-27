@@ -4,14 +4,14 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import io.wispforest.owo.ui.core.ParentComponent;
 import io.wispforest.owo.ui.core.Sizing;
+import io.wispforest.owo.ui.layers.Layer.Instance;
 import io.wispforest.owo.util.pond.OwoScreenExtension;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.event.Event;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -35,7 +35,7 @@ public final class Layers {
      * The event phase during which owo-ui layer instances are created and
      * initialized. This runs after the default phase
      */
-    public static final Identifier INIT_PHASE = new Identifier("owo", "init-layers");
+    public static final ResourceLocation INIT_PHASE = new ResourceLocation("owo", "init-layers");
 
     private static final Multimap<Class<? extends Screen>, Layer<?, ?>> LAYERS = HashMultimap.create();
 
@@ -90,7 +90,7 @@ public final class Layers {
             });
 
             ScreenEvents.afterRender(screeen).register((screen, context, mouseX, mouseY, tickDelta) -> {
-                context.draw();
+                context.flush();
                 for (var instance : getInstances(screen)) {
                     instance.adapter.render(context, mouseX, mouseY, tickDelta);
                 }

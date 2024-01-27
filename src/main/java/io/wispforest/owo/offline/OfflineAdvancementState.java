@@ -1,11 +1,9 @@
 package io.wispforest.owo.offline;
 
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.util.Identifier;
-
 import java.util.Map;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * A utility class that allows easy
@@ -16,16 +14,16 @@ import java.util.Map;
  */
 public class OfflineAdvancementState {
 
-    private final Map<Identifier, AdvancementProgress> advancementData;
+    private final Map<ResourceLocation, AdvancementProgress> advancementData;
 
-    OfflineAdvancementState(Map<Identifier, AdvancementProgress> advancementData) {
+    OfflineAdvancementState(Map<ResourceLocation, AdvancementProgress> advancementData) {
         this.advancementData = advancementData;
     }
 
     /**
      * @return The raw data this state holds
      */
-    public Map<Identifier, AdvancementProgress> advancementData() {
+    public Map<ResourceLocation, AdvancementProgress> advancementData() {
         return advancementData;
     }
 
@@ -36,10 +34,10 @@ public class OfflineAdvancementState {
      * @param advancement The target advancement
      * @return The progress of the targeted advancement
      */
-    public AdvancementProgress getOrAddProgress(AdvancementEntry advancement) {
+    public AdvancementProgress getOrAddProgress(AdvancementHolder advancement) {
         return advancementData.computeIfAbsent(advancement.id(), id -> {
             AdvancementProgress progress = new AdvancementProgress();
-            progress.init(advancement.value().requirements());
+            progress.update(advancement.value().requirements());
             return progress;
         });
     }
@@ -50,10 +48,10 @@ public class OfflineAdvancementState {
      *
      * @param advancement The advancement to grant
      */
-    public void grant(AdvancementEntry advancement) {
+    public void grant(AdvancementHolder advancement) {
         AdvancementProgress progress = getOrAddProgress(advancement);
-        for (String criterion : progress.getUnobtainedCriteria()) {
-            progress.obtain(criterion);
+        for (String criterion : progress.getRemainingCriteria()) {
+            progress.grantProgress(criterion);
         }
     }
 
@@ -63,10 +61,10 @@ public class OfflineAdvancementState {
      *
      * @param advancement The advancement to revoke
      */
-    public void revoke(AdvancementEntry advancement) {
+    public void revoke(AdvancementHolder advancement) {
         AdvancementProgress progress = getOrAddProgress(advancement);
-        for (String criterion : progress.getObtainedCriteria()) {
-            progress.reset(criterion);
+        for (String criterion : progress.getCompletedCriteria()) {
+            progress.revokeProgress(criterion);
         }
     }
 }

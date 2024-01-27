@@ -1,5 +1,8 @@
 package io.wispforest.owo.ui.container;
 
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import io.wispforest.owo.ui.component.Components;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.core.*;
@@ -8,9 +11,6 @@ import io.wispforest.owo.ui.util.Delta;
 import io.wispforest.owo.ui.util.UISounds;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.RotationAxis;
 import org.lwjgl.glfw.GLFW;
 import org.w3c.dom.Element;
 
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import net.minecraft.ChatFormatting;
 
 public class CollapsibleContainer extends FlowLayout {
 
@@ -39,7 +40,7 @@ public class CollapsibleContainer extends FlowLayout {
     protected final FlowLayout titleLayout;
     protected final FlowLayout contentLayout;
 
-    protected CollapsibleContainer(Sizing horizontalSizing, Sizing verticalSizing, Text title, boolean expanded) {
+    protected CollapsibleContainer(Sizing horizontalSizing, Sizing verticalSizing, net.minecraft.network.chat.Component title, boolean expanded) {
         super(horizontalSizing, verticalSizing, Algorithm.VERTICAL);
 
         // Title
@@ -48,7 +49,7 @@ public class CollapsibleContainer extends FlowLayout {
         this.titleLayout.padding(Insets.of(5, 5, 5, 0));
         this.allowOverflow(true);
 
-        title = title.copy().formatted(Formatting.UNDERLINE);
+        title = title.copy().withStyle(ChatFormatting.UNDERLINE);
         this.titleLayout.child(Components.label(title).cursorStyle(CursorStyle.HAND));
 
         this.spinnyBoi = new SpinnyBoiComponent();
@@ -164,7 +165,7 @@ public class CollapsibleContainer extends FlowLayout {
 
     public static CollapsibleContainer parse(Element element) {
         var textElement = UIParsing.childElements(element).get("text");
-        var title = textElement == null ? Text.empty() : UIParsing.parseText(textElement);
+        var title = textElement == null ? net.minecraft.network.chat.Component.empty() : UIParsing.parseText(textElement);
 
         return element.getAttribute("expanded").equals("true")
                 ? Containers.collapsible(Sizing.content(), Sizing.content(), title, true)
@@ -189,7 +190,7 @@ public class CollapsibleContainer extends FlowLayout {
         protected float targetRotation = 90;
 
         public SpinnyBoiComponent() {
-            super(Text.literal(">"));
+            super(net.minecraft.network.chat.Component.literal(">"));
             this.margins(Insets.of(0, 0, 5, 10));
             this.cursorStyle(CursorStyle.HAND);
         }
@@ -202,15 +203,15 @@ public class CollapsibleContainer extends FlowLayout {
 
         @Override
         public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
-            var matrices = context.getMatrices();
+            var matrices = context.pose();
 
-            matrices.push();
+            matrices.pushPose();
             matrices.translate(this.x + this.width / 2f - 1, this.y + this.height / 2f - 1, 0);
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(this.rotation));
+            matrices.mulPose(Axis.ZP.rotationDegrees(this.rotation));
             matrices.translate(-(this.x + this.width / 2f - 1), -(this.y + this.height / 2f - 1), 0);
 
             super.draw(context, mouseX, mouseY, partialTicks, delta);
-            matrices.pop();
+            matrices.popPose();
         }
     }
 }

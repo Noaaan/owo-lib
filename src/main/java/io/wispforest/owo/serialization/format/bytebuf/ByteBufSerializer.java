@@ -5,11 +5,10 @@ import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
 import io.wispforest.owo.serialization.Serializer;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.encoding.StringEncoding;
-import net.minecraft.network.encoding.VarInts;
-import net.minecraft.network.encoding.VarLongs;
-
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.Utf8String;
+import net.minecraft.network.VarInt;
+import net.minecraft.network.VarLong;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ public class ByteBufSerializer<B extends ByteBuf> implements Serializer<B> {
         return new ByteBufSerializer<>(buffer);
     }
 
-    public static ByteBufSerializer<PacketByteBuf> packet() {
+    public static ByteBufSerializer<FriendlyByteBuf> packet() {
         return of(PacketByteBufs.create());
     }
 
@@ -72,12 +71,12 @@ public class ByteBufSerializer<B extends ByteBuf> implements Serializer<B> {
 
     @Override
     public void writeVarInt(int value) {
-        VarInts.write(buffer, value);
+        VarInt.write(buffer, value);
     }
 
     @Override
     public void writeVarLong(long value) {
-        VarLongs.write(buffer, value);
+        VarLong.write(buffer, value);
     }
 
     // ---
@@ -89,7 +88,7 @@ public class ByteBufSerializer<B extends ByteBuf> implements Serializer<B> {
 
     @Override
     public void writeString(String value) {
-        StringEncoding.encode(this.buffer, value, PacketByteBuf.DEFAULT_MAX_STRING_LENGTH);
+        Utf8String.write(this.buffer, value, FriendlyByteBuf.MAX_STRING_LENGTH);
     }
 
     @Override

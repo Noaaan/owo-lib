@@ -1,11 +1,10 @@
 package io.wispforest.owo.client.texture;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * A drawable that can draw an animated texture, very similar to how
@@ -16,10 +15,10 @@ import net.minecraft.util.Util;
  * @author Tempora
  * @author glisco
  */
-public class AnimatedTextureDrawable implements Drawable {
+public class AnimatedTextureDrawable implements Renderable {
 
     private final SpriteSheetMetadata metadata;
-    private final Identifier texture;
+    private final ResourceLocation texture;
 
     private final int validFrames;
     private final int delay;
@@ -33,9 +32,9 @@ public class AnimatedTextureDrawable implements Drawable {
     /**
      * Creates a new animated texture widget using the width and height of the spritesheet as dimensions
      *
-     * @see #AnimatedTextureDrawable(int, int, int, int, Identifier, SpriteSheetMetadata, int, boolean)
+     * @see #AnimatedTextureDrawable(int, int, int, int, ResourceLocation, SpriteSheetMetadata, int, boolean)
      */
-    public AnimatedTextureDrawable(int x, int y, Identifier texture, SpriteSheetMetadata metadata, int delay, boolean loop) {
+    public AnimatedTextureDrawable(int x, int y, ResourceLocation texture, SpriteSheetMetadata metadata, int delay, boolean loop) {
         this(x, y, metadata.width(), metadata.height(), texture, metadata, delay, loop);
     }
 
@@ -50,7 +49,7 @@ public class AnimatedTextureDrawable implements Drawable {
      * @param metadata Metadata on the spritesheet.
      * @param delay    The delay, in milliseconds, between each frame.
      */
-    public AnimatedTextureDrawable(int x, int y, int width, int height, Identifier texture, SpriteSheetMetadata metadata, int delay, boolean loop) {
+    public AnimatedTextureDrawable(int x, int y, int width, int height, ResourceLocation texture, SpriteSheetMetadata metadata, int delay, boolean loop) {
         this.x = x;
         this.y = y;
         this.texture = texture;
@@ -69,7 +68,7 @@ public class AnimatedTextureDrawable implements Drawable {
      * Renders this drawable at the given position. The position
      * of this drawable is mutated non-temporarily
      */
-    public void render(int x, int y, DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(int x, int y, GuiGraphics context, int mouseX, int mouseY, float delta) {
         this.x = x;
         this.y = y;
         this.render(context, mouseX, mouseY, delta);
@@ -77,21 +76,21 @@ public class AnimatedTextureDrawable implements Drawable {
 
     @SuppressWarnings("IntegerDivisionInFloatingPointContext")
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (startTime == -1L) startTime = Util.getMeasuringTimeMs();
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        if (startTime == -1L) startTime = Util.getMillis();
 
-        long currentTime = Util.getMeasuringTimeMs();
+        long currentTime = Util.getMillis();
         long frame = Math.min(validFrames - 1, (currentTime - startTime) / delay);
 
         if (loop && frame == validFrames - 1) {
-            startTime = Util.getMeasuringTimeMs();
+            startTime = Util.getMillis();
             frame = 0;
         }
 
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
 
-        context.drawTexture(this.texture, x, y, (frame / rows) * metadata.frameWidth(), (frame % rows) * metadata.frameHeight(), width, height, metadata.width(), metadata.height());
+        context.blit(this.texture, x, y, (frame / rows) * metadata.frameWidth(), (frame % rows) * metadata.frameHeight(), width, height, metadata.width(), metadata.height());
 
         RenderSystem.disableDepthTest();
         RenderSystem.disableBlend();

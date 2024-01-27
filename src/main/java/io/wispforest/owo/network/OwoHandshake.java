@@ -19,31 +19,32 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerConfigurationNetworking;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientConfigurationNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientConfigurationPacketListenerImpl;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerConfigurationNetworkHandler;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
+import net.minecraft.server.network.ServerConfigurationPacketListenerImpl;
+import net.minecraft.util.Tuple;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.ToIntFunction;
 
 @ApiStatus.Internal
 public final class OwoHandshake {
 
-    private static final Endec<Map<Identifier, Integer>> CHANNEL_HASHES_ENDEC = Endec.map(BuiltInEndecs.IDENTIFIER, Endec.INT);
+    private static final Endec<Map<ResourceLocation, Integer>> CHANNEL_HASHES_ENDEC = Endec.map(BuiltInEndecs.IDENTIFIER, Endec.INT);
 
-    private static final MutableText PREFIX = TextOps.concat(Owo.PREFIX, Text.of("§chandshake failure\n"));
-    public static final Identifier CHANNEL_ID = new Identifier("owo", "handshake");
-    public static final Identifier OFF_CHANNEL_ID = new Identifier("owo", "handshake_off");
+    private static final MutableComponent PREFIX = TextOps.concat(Owo.PREFIX, Component.nullToEmpty("§chandshake failure\n"));
+    public static final ResourceLocation CHANNEL_ID = new ResourceLocation("owo", "handshake");
+    public static final ResourceLocation OFF_CHANNEL_ID = new ResourceLocation("owo", "handshake_off");
 
     private static final boolean ENABLED = System.getProperty("owo.handshake.enabled") != null ? Boolean.getBoolean("owo.handshake.enabled") : Owo.DEBUG;
     private static boolean HANDSHAKE_REQUIRED = false;
@@ -94,7 +95,7 @@ public final class OwoHandshake {
     // Packets
     // -------
 
-    private static void configureStart(ServerConfigurationNetworkHandler handler, MinecraftServer server) {
+    private static void configureStart(ServerConfigurationPacketListenerImpl handler, MinecraftServer server) {
         if (!ENABLED) return;
 
         if (ServerConfigurationNetworking.canSend(handler, OFF_CHANNEL_ID)) {
@@ -105,7 +106,7 @@ public final class OwoHandshake {
         if (!ServerConfigurationNetworking.canSend(handler, CHANNEL_ID)) {
             if (!HANDSHAKE_REQUIRED) return;
 
-            handler.disconnect(TextOps.concat(PREFIX, Text.of("incompatible client")));
+            handler.disconnect(TextOps.concat(PREFIX, Component.nullToEmpty("incompatible client")));
             Owo.LOGGER.info("[Handshake] Handshake failed, client doesn't understand channel packet");
             return;
         }
@@ -117,7 +118,7 @@ public final class OwoHandshake {
     }
 
     @Environment(EnvType.CLIENT)
-    private static void syncClient(MinecraftClient client, ClientConfigurationNetworkHandler handler, PacketByteBuf buf, PacketSender sender) {
+    private static void syncClient(Minecraft client, ClientConfigurationPacketListenerImpl handler, FriendlyByteBuf buf, PacketSender sender) {
         Owo.LOGGER.info("[Handshake] Sending client channels");
         QUERY_RECEIVED = true;
 
@@ -134,7 +135,7 @@ public final class OwoHandshake {
         sender.sendPacket(CHANNEL_ID, response);
     }
 
-    private static void syncServer(MinecraftServer server, ServerConfigurationNetworkHandler handler, PacketByteBuf buf, PacketSender responseSender) {
+    private static void syncServer(MinecraftServer server, ServerConfigurationPacketListenerImpl handler, FriendlyByteBuf buf, PacketSender responseSender) {
         Owo.LOGGER.info("[Handshake] Receiving client channels");
 
         final var clientChannels = buf.read(CHANNEL_HASHES_ENDEC);
@@ -146,7 +147,7 @@ public final class OwoHandshake {
         isAllGood &= verifyReceivedHashes("controllers", clientParticleControllers, ParticleSystemController.REGISTERED_CONTROLLERS, OwoHandshake::hashController, disconnectMessage);
 
         if (!isAllGood) {
-            handler.disconnect(TextOps.concat(PREFIX, Text.of(disconnectMessage.toString())));
+            handler.disconnect(TextOps.concat(PREFIX, Component.nullToEmpty(disconnectMessage.toString())));
         }
 
         if (buf.readableBytes() > 0) {
@@ -158,13 +159,13 @@ public final class OwoHandshake {
     }
 
     @Environment(EnvType.CLIENT)
-    private static void handleReadyClient(ClientConfigurationNetworkHandler handler, MinecraftClient client) {
+    private static void handleReadyClient(ClientConfigurationPacketListenerImpl handler, Minecraft client) {
         if (ClientConfigurationNetworking.canSend(CHANNEL_ID) || !HANDSHAKE_REQUIRED || !ENABLED) return;
 
         client.execute(() -> {
             ((ClientCommonNetworkHandlerAccessor) handler)
                     .getConnection()
-                    .disconnect(TextOps.concat(PREFIX, Text.of("incompatible server")));
+                    .disconnect(TextOps.concat(PREFIX, Component.nullToEmpty("incompatible server")));
         });
     }
 
@@ -172,8 +173,8 @@ public final class OwoHandshake {
     // Utility
     // -------
 
-    private static <T> Set<Identifier> filterOptionalServices(Map<Identifier, Integer> remoteMap, Map<Identifier, T> localMap, ToIntFunction<T> hashFunction) {
-        Set<Identifier> readableServices = new HashSet<>();
+    private static <T> Set<ResourceLocation> filterOptionalServices(Map<ResourceLocation, Integer> remoteMap, Map<ResourceLocation, T> localMap, ToIntFunction<T> hashFunction) {
+        Set<ResourceLocation> readableServices = new HashSet<>();
 
         for (var entry : remoteMap.entrySet()) {
             var service = localMap.get(entry.getKey());
@@ -187,7 +188,7 @@ public final class OwoHandshake {
         return readableServices;
     }
 
-    private static <T> boolean verifyReceivedHashes(String serviceNamePlural, Map<Identifier, Integer> clientMap, Map<Identifier, T> serverMap, ToIntFunction<T> hashFunction, StringBuilder disconnectMessage) {
+    private static <T> boolean verifyReceivedHashes(String serviceNamePlural, Map<ResourceLocation, Integer> clientMap, Map<ResourceLocation, T> serverMap, ToIntFunction<T> hashFunction, StringBuilder disconnectMessage) {
         boolean isAllGood = true;
 
         if (!clientMap.keySet().equals(serverMap.keySet())) {
@@ -195,14 +196,14 @@ public final class OwoHandshake {
 
             var leftovers = findCollisions(clientMap.keySet(), serverMap.keySet());
 
-            if (!leftovers.getLeft().isEmpty()) {
+            if (!leftovers.getA().isEmpty()) {
                 disconnectMessage.append("server is missing ").append(serviceNamePlural).append(":\n");
-                leftovers.getLeft().forEach(identifier -> disconnectMessage.append("§7").append(identifier).append("§r\n"));
+                leftovers.getA().forEach(identifier -> disconnectMessage.append("§7").append(identifier).append("§r\n"));
             }
 
-            if (!leftovers.getRight().isEmpty()) {
+            if (!leftovers.getB().isEmpty()) {
                 disconnectMessage.append("client is missing ").append(serviceNamePlural).append(":\n");
-                leftovers.getRight().forEach(identifier -> disconnectMessage.append("§7").append(identifier).append("§r\n"));
+                leftovers.getB().forEach(identifier -> disconnectMessage.append("§7").append(identifier).append("§r\n"));
             }
         }
 
@@ -228,8 +229,8 @@ public final class OwoHandshake {
         return isAllGood;
     }
 
-    private static <T> void writeHashes(PacketByteBuf buffer, Map<Identifier, T> values, ToIntFunction<T> hashFunction) {
-        Map<Identifier, Integer> hashes = new HashMap<>();
+    private static <T> void writeHashes(FriendlyByteBuf buffer, Map<ResourceLocation, T> values, ToIntFunction<T> hashFunction) {
+        Map<ResourceLocation, Integer> hashes = new HashMap<>();
 
         for (var entry : values.entrySet()) {
             hashes.put(entry.getKey(), hashFunction.applyAsInt(entry.getValue()));
@@ -238,9 +239,9 @@ public final class OwoHandshake {
         buffer.write(CHANNEL_HASHES_ENDEC, hashes);
     }
 
-    private static Pair<Set<Identifier>, Set<Identifier>> findCollisions(Set<Identifier> first, Set<Identifier> second) {
-        var firstLeftovers = new HashSet<Identifier>();
-        var secondLeftovers = new HashSet<Identifier>();
+    private static Tuple<Set<ResourceLocation>, Set<ResourceLocation>> findCollisions(Set<ResourceLocation> first, Set<ResourceLocation> second) {
+        var firstLeftovers = new HashSet<ResourceLocation>();
+        var secondLeftovers = new HashSet<ResourceLocation>();
 
         first.forEach(identifier -> {
             if (!second.contains(identifier)) firstLeftovers.add(identifier);
@@ -250,7 +251,7 @@ public final class OwoHandshake {
             if (!first.contains(identifier)) secondLeftovers.add(identifier);
         });
 
-        return new Pair<>(firstLeftovers, secondLeftovers);
+        return new Tuple<>(firstLeftovers, secondLeftovers);
     }
 
     private static int hashChannel(OwoNetChannel channel) {

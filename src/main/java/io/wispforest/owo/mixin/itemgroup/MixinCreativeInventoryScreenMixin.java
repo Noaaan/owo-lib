@@ -2,30 +2,30 @@ package io.wispforest.owo.mixin.itemgroup;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.item.ItemGroup;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.world.item.CreativeModeTab;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings({"MixinAnnotationTarget", "UnresolvedMixinReference"})
-@Mixin(value = CreativeInventoryScreen.class, priority = 1100)
+@Mixin(value = CreativeModeInventoryScreen.class, priority = 1100)
 public abstract class MixinCreativeInventoryScreenMixin {
 
     @Shadow
-    private static ItemGroup selectedTab;
+    private static CreativeModeTab selectedTab;
 
     @Shadow
     private static int fabric_currentPage;
 
-    private static final Int2ObjectMap<ItemGroup> owo$selectedTabForPage = new Int2ObjectOpenHashMap<>();
+    private static final Int2ObjectMap<CreativeModeTab> owo$selectedTabForPage = new Int2ObjectOpenHashMap<>();
+    @Unique
     private static boolean owo$calledFromInit = false;
 
     @Shadow(remap = false)
-    private boolean fabric_isGroupVisible(ItemGroup itemGroup) {
+    private boolean fabric_isGroupVisible(CreativeModeTab itemGroup) {
         throw new RuntimeException();
     }
 
@@ -33,17 +33,17 @@ public abstract class MixinCreativeInventoryScreenMixin {
     private void fabric_updateSelection() {}
 
     @Shadow
-    protected abstract void setSelectedTab(ItemGroup group);
+    protected abstract void selectTab(CreativeModeTab group);
 
-    @Inject(method = "setSelectedTab", at = @At("TAIL"))
-    private void captureSetTab(ItemGroup group, CallbackInfo ci) {
+    @Inject(method = "selectTab", at = @At("TAIL"))
+    private void captureSetTab(CreativeModeTab group, CallbackInfo ci) {
         owo$selectedTabForPage.put(fabric_currentPage, group);
     }
 
     @Inject(method = "fabric_updateSelection", at = @At("HEAD"), cancellable = true, remap = false)
     private void yesThisMakesPerfectSenseAndIsVeryUsable(CallbackInfo ci) {
         if (owo$selectedTabForPage.get(fabric_currentPage) != null) {
-            this.setSelectedTab(owo$selectedTabForPage.get(fabric_currentPage));
+            this.selectTab(owo$selectedTabForPage.get(fabric_currentPage));
             ci.cancel();
             return;
         }

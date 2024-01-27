@@ -9,8 +9,10 @@ import io.wispforest.owo.serialization.endec.BuiltInEndecs;
 import io.wispforest.owo.serialization.endec.StructEndecBuilder;
 import io.wispforest.owo.serialization.format.json.JsonDeserializer;
 import io.wispforest.owo.serialization.format.json.JsonSerializer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -48,12 +50,12 @@ public class FabledBananasClass {
         BlockPos decoded = BuiltInEndecs.BLOCK_POS.decodeFully(JsonDeserializer::of, result);
 
 
-        Endec<Map<Identifier, Integer>> endec = Endec.map(Identifier::toString, Identifier::new, Endec.INT);
-        System.out.println(endec.encodeFully(JsonSerializer::of, Map.of(new Identifier("a"), 6, new Identifier("b"), 9)).toString());
+        Endec<Map<ResourceLocation, Integer>> endec = Endec.map(ResourceLocation::toString, ResourceLocation::new, Endec.INT);
+        System.out.println(endec.encodeFully(JsonSerializer::of, Map.of(new ResourceLocation("a"), 6, new ResourceLocation("b"), 9)).toString());
         System.out.println(endec.decodeFully(JsonDeserializer::of, new Gson().fromJson("{\"a:b\":24,\"c\":17}", JsonObject.class)));
 
-        Endec<Map<BlockPos, Identifier>> mappy = Endec.map(BuiltInEndecs.BLOCK_POS, BuiltInEndecs.IDENTIFIER);
-        System.out.println(mappy.encodeFully(JsonSerializer::of, Map.of(BlockPos.ORIGIN, new Identifier("a"), new BlockPos(69, 420, 489), new Identifier("bruh:l"))).toString());
+        Endec<Map<BlockPos, ResourceLocation>> mappy = Endec.map(BuiltInEndecs.BLOCK_POS, BuiltInEndecs.IDENTIFIER);
+        System.out.println(mappy.encodeFully(JsonSerializer::of, Map.of(BlockPos.ZERO, new ResourceLocation("a"), new BlockPos(69, 420, 489), new ResourceLocation("bruh:l"))).toString());
         System.out.println(mappy.decodeFully(JsonDeserializer::of, new Gson().fromJson("[{\"k\":[69,420,489],\"v\":\"bruh:l\"},{\"k\":[0,0,0],\"v\":\"minecraft:a\"}]", JsonArray.class)));
     }
 }

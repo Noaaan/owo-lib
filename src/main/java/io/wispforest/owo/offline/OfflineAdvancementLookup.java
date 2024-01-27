@@ -13,17 +13,15 @@ import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.mixin.offline.AdvancementProgressAccessor;
-import net.minecraft.GameVersion;
 import net.minecraft.SharedConstants;
-import net.minecraft.advancement.Advancement;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.advancement.PlayerAdvancementTracker;
-import net.minecraft.datafixer.DataFixTypes;
-import net.minecraft.datafixer.Schemas;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.Util;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.advancements.AdvancementRequirements;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -45,9 +43,9 @@ public final class OfflineAdvancementLookup {
 
     private OfflineAdvancementLookup() {}
 
-    public static final Codec<Map<Identifier, AdvancementProgress>> CODEC = DataFixTypes.ADVANCEMENTS.createDataFixingCodec(
-        Codec.unboundedMap(Identifier.CODEC, AdvancementProgress.CODEC),
-        Schemas.getFixer(),
+    public static final Codec<Map<ResourceLocation, AdvancementProgress>> CODEC = DataFixTypes.ADVANCEMENTS.wrapCodec(
+        Codec.unboundedMap(ResourceLocation.CODEC, AdvancementProgress.CODEC),
+        DataFixers.getDataFixer(),
         1343
     );
 
@@ -58,13 +56,13 @@ public final class OfflineAdvancementLookup {
      * @param player The player to modify
      * @param map    The advancement state to save
      */
-    public static void put(UUID player, Map<Identifier, AdvancementProgress> map) {
+    public static void put(UUID player, Map<ResourceLocation, AdvancementProgress> map) {
         DataSavedEvents.ADVANCEMENTS.invoker().onSaved(player, map);
 
         try {
-            Path advancementsPath = Owo.currentServer().getSavePath(WorldSavePath.ADVANCEMENTS);
+            Path advancementsPath = Owo.currentServer().getWorldPath(LevelResource.PLAYER_ADVANCEMENTS_DIR);
             Path advancementPath = advancementsPath.resolve(player.toString() + ".json");
-            JsonElement saved = Util.getResult(CODEC.encodeStart(JsonOps.INSTANCE, map), IllegalStateException::new);
+            JsonElement saved = Util.getOrThrow(CODEC.encodeStart(JsonOps.INSTANCE, map), IllegalStateException::new);
 
             try (BufferedWriter bw = Files.newBufferedWriter(advancementPath)) {
                 GSON.toJson(saved, bw);
@@ -84,9 +82,9 @@ public final class OfflineAdvancementLookup {
      * @param player The player to query
      * @return The saved advancement data, or {@code null} if none is saved
      */
-    public static @Nullable Map<Identifier, AdvancementProgress> get(UUID player) {
+    public static @Nullable Map<ResourceLocation, AdvancementProgress> get(UUID player) {
         try {
-            Path advancementsPath = Owo.currentServer().getSavePath(WorldSavePath.ADVANCEMENTS);
+            Path advancementsPath = Owo.currentServer().getWorldPath(LevelResource.PLAYER_ADVANCEMENTS_DIR);
 
             if (!Files.exists(advancementsPath))
                 return null;
@@ -96,21 +94,21 @@ public final class OfflineAdvancementLookup {
             if (!Files.exists(advancementFile))
                 return null;
 
-            Map<Identifier, AdvancementProgress> parsedMap;
+            Map<ResourceLocation, AdvancementProgress> parsedMap;
 
             try (InputStream s = Files.newInputStream(advancementFile);
                  InputStreamReader streamReader = new InputStreamReader(s);
                  JsonReader reader = new JsonReader(streamReader)) {
                 reader.setLenient(false);
                 JsonElement jsonElement = Streams.parse(reader);
-                parsedMap = Util.getResult(CODEC.parse(JsonOps.INSTANCE, jsonElement), JsonParseException::new);
+                parsedMap = Util.getOrThrow(CODEC.parse(JsonOps.INSTANCE, jsonElement), JsonParseException::new);
             }
 
-            for (Map.Entry<Identifier, AdvancementProgress> entry : parsedMap.entrySet()) {
+            for (Map.Entry<ResourceLocation, AdvancementProgress> entry : parsedMap.entrySet()) {
                 var requirements = ((AdvancementProgressAccessor) entry.getValue()).getRequirements();
 
-                if (requirements.getLength() == 0) {
-                    AdvancementEntry adv = Owo.currentServer().getAdvancementLoader().get(entry.getKey());
+                if (requirements.size() == 0) {
+                    AdvancementHolder adv = Owo.currentServer().getAdvancements().get(entry.getKey());
 
                     if (adv != null) {
                         ((AdvancementProgressAccessor) entry.getValue()).setRequirements(adv.value().requirements());
@@ -133,7 +131,7 @@ public final class OfflineAdvancementLookup {
      * @param editor The function to apply to the advancement state
      */
     public static void edit(UUID player, Consumer<OfflineAdvancementState> editor) {
-        Map<Identifier, AdvancementProgress> advancementData = get(player);
+        Map<ResourceLocation, AdvancementProgress> advancementData = get(player);
         if (advancementData == null) advancementData = new HashMap<>();
 
         var transaction = new OfflineAdvancementState(advancementData);
@@ -145,7 +143,7 @@ public final class OfflineAdvancementLookup {
      * @return The UUID of every player that has saved advancements
      */
     public static List<UUID> savedPlayers() {
-        Path advancementsPath = Owo.currentServer().getSavePath(WorldSavePath.ADVANCEMENTS);
+        Path advancementsPath = Owo.currentServer().getWorldPath(LevelResource.PLAYER_ADVANCEMENTS_DIR);
 
         if (!Files.isDirectory(advancementsPath))
             return Collections.emptyList();

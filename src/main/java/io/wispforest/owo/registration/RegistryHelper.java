@@ -1,8 +1,8 @@
 package io.wispforest.owo.registration;
 
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public final class RegistryHelper<T> {
     private static final Map<Registry<?>, RegistryHelper<?>> INSTANCES = new HashMap<>();
 
     private final Registry<T> registry;
-    private final Map<Identifier, Consumer<T>> actions = new HashMap<>();
+    private final Map<ResourceLocation, Consumer<T>> actions = new HashMap<>();
 
     private final List<ComplexRegistryAction> complexActions = new ArrayList<>();
 
@@ -57,7 +57,7 @@ public final class RegistryHelper<T> {
      * @param id     The ID the registry must contain for {@code action} to be run
      * @param action The code to run once {@code id} is present
      */
-    public void runWhenPresent(Identifier id, Consumer<T> action) {
+    public void runWhenPresent(ResourceLocation id, Consumer<T> action) {
         if (isContained(registry, id)) {
             action.accept(registry.get(id));
         } else {
@@ -77,8 +77,8 @@ public final class RegistryHelper<T> {
         }
     }
 
-    private static <T> boolean isContained(Registry<T> registry, Identifier identifier) {
-        return registry.containsId(identifier);
+    private static <T> boolean isContained(Registry<T> registry, ResourceLocation identifier) {
+        return registry.containsKey(identifier);
     }
 
 }

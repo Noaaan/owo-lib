@@ -11,26 +11,26 @@ import io.wispforest.owo.ui.util.UISounds;
 import io.wispforest.owo.util.EventSource;
 import io.wispforest.owo.util.EventStream;
 import io.wispforest.owo.util.Observable;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.w3c.dom.Element;
 
 import java.util.Map;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
 public class SmallCheckboxComponent extends BaseComponent {
 
-    public static final Identifier TEXTURE = new Identifier("owo", "textures/gui/smol_checkbox.png");
+    public static final ResourceLocation TEXTURE = new ResourceLocation("owo", "textures/gui/smol_checkbox.png");
 
     protected final EventStream<OnChanged> checkedEvents = OnChanged.newStream();
 
-    protected final Observable<@Nullable Text> label;
+    protected final Observable<@Nullable Component> label;
     protected boolean labelShadow = false;
     protected boolean checked = false;
 
-    public SmallCheckboxComponent(Text label) {
+    public SmallCheckboxComponent(Component label) {
         this.cursorStyle(CursorStyle.HAND);
 
         this.label = Observable.of(label);
@@ -44,19 +44,19 @@ public class SmallCheckboxComponent extends BaseComponent {
     @Override
     public void draw(OwoUIDrawContext context, int mouseX, int mouseY, float partialTicks, float delta) {
         if (this.label.get() != null) {
-            context.drawText(MinecraftClient.getInstance().textRenderer, this.label.get(), this.x + 13 + 2, this.y + 3, Color.WHITE.argb(), this.labelShadow);
+            context.drawString(Minecraft.getInstance().font, this.label.get(), this.x + 13 + 2, this.y + 3, Color.WHITE.argb(), this.labelShadow);
         }
 
-        context.drawTexture(TEXTURE, this.x, this.y, 13, 13, 0, 0, 13, 13, 32, 16);
+        context.blit(TEXTURE, this.x, this.y, 13, 13, 0, 0, 13, 13, 32, 16);
         if (this.checked) {
-            context.drawTexture(TEXTURE, this.x, this.y, 13, 13, 16, 0, 13, 13, 32, 16);
+            context.blit(TEXTURE, this.x, this.y, 13, 13, 16, 0, 13, 13, 32, 16);
         }
     }
 
     @Override
     protected int determineHorizontalContentSize(Sizing sizing) {
         return this.label.get() != null
-                ? 13 + 2 + MinecraftClient.getInstance().textRenderer.getWidth(this.label.get())
+                ? 13 + 2 + Minecraft.getInstance().font.width(this.label.get())
                 : 13;
     }
 
@@ -114,12 +114,12 @@ public class SmallCheckboxComponent extends BaseComponent {
         return checked;
     }
 
-    public SmallCheckboxComponent label(Text label) {
+    public SmallCheckboxComponent label(Component label) {
         this.label.set(label);
         return this;
     }
 
-    public Text label() {
+    public Component label() {
         return this.label.get();
     }
 

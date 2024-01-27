@@ -14,7 +14,7 @@ public class MainMixin {
     @SuppressWarnings({"MixinAnnotationTarget", "UnresolvedMixinReference"})
     @Group(name = "serverFreezeHooks", min = 1, max = 1)
     @Inject(method = "main", at = @At(value = "INVOKE", remap = false,
-            target = "Lnet/fabricmc/loader/impl/game/minecraft/Hooks;startServer(Ljava/io/File;Ljava/lang/Object;)V", shift = At.Shift.AFTER))
+            target = "Lnet/fabricmc/loader/impl/game/minecraft/Hooks;startServer(Ljava/io/File;Ljava/lang/Object;)V", shift = At.Shift.AFTER), remap = false)
     private static void afterFabricHook(CallbackInfo ci) {
         OwoFreezer.freeze();
     }
@@ -22,7 +22,7 @@ public class MainMixin {
     @SuppressWarnings({"MixinAnnotationTarget", "UnresolvedMixinReference"})
     @Group(name = "serverFreezeHooks", min = 1, max = 1)
     @Inject(method = "main", at = @At(value = "INVOKE", remap = false,
-            target = "Lorg/quiltmc/loader/impl/game/minecraft/Hooks;startServer(Ljava/io/File;Ljava/lang/Object;)V", shift = At.Shift.AFTER))
+            target = "Lorg/quiltmc/loader/impl/game/minecraft/Hooks;startServer(Ljava/io/File;Ljava/lang/Object;)V", shift = At.Shift.AFTER), remap = false)
     private static void afterQuiltHook(CallbackInfo ci) {
         OwoFreezer.freeze();
     }

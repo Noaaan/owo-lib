@@ -1,34 +1,34 @@
 package io.wispforest.owo.mixin;
 
 import io.wispforest.owo.util.RegistryAccess;
-import net.minecraft.registry.SimpleRegistry;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Map;
+import net.minecraft.core.Holder;
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.resources.ResourceLocation;
 
-@Mixin(SimpleRegistry.class)
+@Mixin(MappedRegistry.class)
 public class SimpleRegistryMixin<T> implements RegistryAccess.AccessibleRegistry<T> {
 
     @Shadow
     @Final
-    private Map<Identifier, RegistryEntry.Reference<T>> idToEntry;
+    private Map<ResourceLocation, Holder.Reference<T>> byLocation;
 
     @Shadow
     @Final
-    private Map<T, RegistryEntry.Reference<T>> valueToEntry;
+    private Map<T, Holder.Reference<T>> byValue;
 
     @Override
-    public @Nullable RegistryEntry<T> getEntry(Identifier id) {
-        return this.idToEntry.get(id);
+    public @Nullable Holder<T> getEntry(ResourceLocation id) {
+        return this.byLocation.get(id);
     }
 
     @Override
-    public @Nullable RegistryEntry<T> getEntry(T value) {
-        return this.valueToEntry.get(value);
+    public @Nullable Holder<T> getEntry(T value) {
+        return this.byValue.get(value);
     }
 }

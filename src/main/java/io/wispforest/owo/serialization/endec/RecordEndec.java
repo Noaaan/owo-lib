@@ -1,5 +1,6 @@
 package io.wispforest.owo.serialization.endec;
 
+
 import io.wispforest.owo.Owo;
 import io.wispforest.owo.serialization.Deserializer;
 import io.wispforest.owo.serialization.Endec;
@@ -9,8 +10,10 @@ import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

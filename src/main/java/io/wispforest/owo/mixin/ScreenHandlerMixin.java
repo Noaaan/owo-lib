@@ -12,11 +12,11 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-@Mixin(ScreenHandler.class)
+@Mixin(AbstractContainerMenu.class)
 public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenHandlerExtension {
 
-    @Shadow private boolean disableSync;
+    @Shadow private boolean suppressRemoteUpdates;
 
     private final List<SyncedProperty<?>> owo$properties = new ArrayList<>();
 
@@ -41,15 +41,15 @@ public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenH
     private final List<ScreenhandlerMessageData<?>> owo$clientboundMessages = new ArrayList<>();
     private final List<ScreenhandlerMessageData<?>> owo$serverboundMessages = new ArrayList<>();
 
-    private PlayerEntity owo$player = null;
+    private Player owo$player = null;
 
     @Override
-    public void owo$attachToPlayer(PlayerEntity player) {
+    public void owo$attachToPlayer(Player player) {
         this.owo$player = player;
     }
 
     @Override
-    public PlayerEntity player() {
+    public Player player() {
         return this.owo$player;
     }
 
@@ -95,13 +95,13 @@ public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenH
         buf.write(messageData.endec(), message);
 
         if (messageData.clientbound()) {
-            if (!(this.owo$player instanceof ServerPlayerEntity serverPlayer)) {
+            if (!(this.owo$player instanceof ServerPlayer serverPlayer)) {
                 throw new NetworkException("Tried to send clientbound message on the server");
             }
 
             ServerPlayNetworking.send(serverPlayer, ScreenInternals.LOCAL_PACKET, buf);
         } else {
-            if (!this.owo$player.getWorld().isClient) {
+            if (!this.owo$player.level().isClientSide) {
                 throw new NetworkException("Tried to send serverbound message on the client");
             }
 
@@ -110,13 +110,13 @@ public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenH
     }
 
     @Environment(EnvType.CLIENT)
-    private void owo$sendToServer(Identifier channel, PacketByteBuf data) {
+    private void owo$sendToServer(ResourceLocation channel, FriendlyByteBuf data) {
         ClientPlayNetworking.send(channel, data);
     }
 
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public void owo$handlePacket(PacketByteBuf buf, boolean clientbound) {
+    public void owo$handlePacket(FriendlyByteBuf buf, boolean clientbound) {
         int id = buf.readVarInt();
         ScreenhandlerMessageData messageData = (clientbound ? this.owo$clientboundMessages : this.owo$serverboundMessages).get(id);
 
@@ -131,7 +131,7 @@ public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenH
     }
 
     @Override
-    public void owo$readPropertySync(PacketByteBuf buf) {
+    public void owo$readPropertySync(FriendlyByteBuf buf) {
         int count = buf.readVarInt();
 
         for (int i = 0; i < count; i++) {
@@ -140,21 +140,21 @@ public abstract class ScreenHandlerMixin implements OwoScreenHandler, OwoScreenH
         }
     }
 
-    @Inject(method = "syncState", at = @At("RETURN"))
+    @Inject(method = "sendAllDataToRemote", at = @At("RETURN"))
     private void syncOnSyncState(CallbackInfo ci) {
         this.syncProperties();
     }
 
-    @Inject(method = "sendContentUpdates", at = @At("RETURN"))
+    @Inject(method = "broadcastChanges", at = @At("RETURN"))
     private void syncOnSendContentUpdates(CallbackInfo ci) {
-        if (disableSync) return;
+        if (suppressRemoteUpdates) return;
 
         this.syncProperties();
     }
 
     private void syncProperties() {
         if (this.owo$player == null) return;
-        if (!(this.owo$player instanceof ServerPlayerEntity player)) return;
+        if (!(this.owo$player instanceof ServerPlayer player)) return;
 
         int count = 0;
 
