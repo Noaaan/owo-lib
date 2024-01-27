@@ -6,10 +6,7 @@ import io.wispforest.owo.serialization.endec.StructEndecBuilder;
 import io.wispforest.owo.serialization.format.bytebuf.ByteBufDeserializer;
 import io.wispforest.owo.serialization.format.bytebuf.ByteBufSerializer;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 

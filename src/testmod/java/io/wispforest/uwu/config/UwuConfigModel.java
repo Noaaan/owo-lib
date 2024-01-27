@@ -4,7 +4,6 @@ import blue.endless.jankson.Comment;
 import io.wispforest.owo.config.Option;
 import io.wispforest.owo.config.annotation.*;
 import io.wispforest.owo.ui.core.Color;
-
 import java.util.ArrayList;
 import java.util.List;
 

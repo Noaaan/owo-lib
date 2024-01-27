@@ -6,9 +6,8 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.uwu.items.UwuItems;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TooManyComponentsScreen extends BaseOwoScreen<FlowLayout> {
@@ -25,9 +24,9 @@ public class TooManyComponentsScreen extends BaseOwoScreen<FlowLayout> {
                         Containers.verticalFlow(Sizing.content(), Sizing.content()).<FlowLayout>configure(flowLayout -> {
                             for (int i = 0; i < 50000; i++) {
                                 flowLayout.child(
-                                        Containers.collapsible(Sizing.content(), Sizing.content(), Text.of(String.valueOf(ThreadLocalRandom.current().nextInt(100000))), false)
+                                        Containers.collapsible(Sizing.content(), Sizing.content(), Component.nullToEmpty(String.valueOf(ThreadLocalRandom.current().nextInt(100000))), false)
                                                 .child(
-                                                        Components.item(UwuItems.SCREEN_SHARD.getDefaultStack()).sizing(Sizing.fixed(100))
+                                                        Components.item(UwuItems.SCREEN_SHARD.getDefaultInstance()).sizing(Sizing.fixed(100))
                                                 )
                                 );
                             }

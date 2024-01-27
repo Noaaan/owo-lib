@@ -2,13 +2,10 @@ package io.wispforest.uwu.text;
 
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.endec.StructEndecBuilder;
-import net.minecraft.text.StringVisitable;
-import net.minecraft.text.Style;
-import net.minecraft.text.TextContent;
-
+import net.minecraft.network.chat.*;
 import java.util.Optional;
 
-public class BasedTextContent implements TextContent {
+public class BasedTextContent implements ComponentContents {
 
     public static final Type<BasedTextContent> TYPE = new Type<>(
             StructEndecBuilder.of(Endec.STRING.fieldOf("based", o -> o.basedText), BasedTextContent::new).mapCodec(),
@@ -21,17 +18,17 @@ public class BasedTextContent implements TextContent {
     }
 
     @Override
-    public <T> Optional<T> visit(StringVisitable.Visitor<T> visitor) {
+    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> visitor) {
         return visitor.accept("I am extremely based: " + basedText);
     }
 
     @Override
-    public <T> Optional<T> visit(StringVisitable.StyledVisitor<T> visitor, Style style) {
+    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> visitor, Style style) {
         return visitor.accept(style, "I am extremely based: " + basedText);
     }
 
     @Override
-    public Type<?> getType() {
+    public Type<?> type() {
         return TYPE;
     }
 }

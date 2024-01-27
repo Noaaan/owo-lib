@@ -1,21 +1,15 @@
 package io.wispforest.uwu;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.endec.BuiltInEndecs;
 import io.wispforest.owo.serialization.endec.StructEndecBuilder;
 import io.wispforest.owo.serialization.format.json.JsonDeserializer;
 import io.wispforest.owo.serialization.format.json.JsonSerializer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.world.item.Item;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +17,7 @@ public class FabledBananasClass {
 
     public static final Endec<FabledBananasClass> ENDEC = StructEndecBuilder.of(
             Endec.INT.fieldOf("banana_amount", FabledBananasClass::bananaAmount),
-            BuiltInEndecs.ofRegistry(Registries.ITEM).fieldOf("banana_item", FabledBananasClass::bananaItem),
+            BuiltInEndecs.ofRegistry(BuiltInRegistries.ITEM).fieldOf("banana_item", FabledBananasClass::bananaItem),
             BuiltInEndecs.BLOCK_POS.listOf().fieldOf("banana_positions", FabledBananasClass::bananaPositions),
             FabledBananasClass::new
     );

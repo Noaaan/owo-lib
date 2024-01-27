@@ -8,8 +8,8 @@ import io.wispforest.owo.ui.container.Containers;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.*;
 import io.wispforest.uwu.Uwu;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
 public class SelectUwuScreenScreen extends BaseOwoScreen<FlowLayout> {
@@ -26,7 +26,7 @@ public class SelectUwuScreenScreen extends BaseOwoScreen<FlowLayout> {
                 .horizontalAlignment(HorizontalAlignment.CENTER);
 
         this.uiAdapter.rootComponent.child(
-                Components.label(Text.literal("Available screens"))
+                Components.label(Component.literal("Available screens"))
                         .shadow(true)
                         .margins(Insets.bottom(5))
         );
@@ -38,17 +38,17 @@ public class SelectUwuScreenScreen extends BaseOwoScreen<FlowLayout> {
                     .horizontalAlignment(HorizontalAlignment.CENTER);
         });
 
-        panel.child(Components.button(Text.literal("code demo"), button -> this.client.setScreen(new ComponentTestScreen())));
-        panel.child(Components.button(Text.literal("xml demo"), button -> this.client.setScreen(new TestParseScreen())));
-        panel.child(Components.button(Text.literal("code config"), button -> this.client.setScreen(new TestConfigScreen())));
-        panel.child(Components.button(Text.literal("xml config"), button -> this.client.setScreen(ConfigScreen.create(Uwu.CONFIG, null))));
-        panel.child(Components.button(Text.literal("optimization test"), button -> this.client.setScreen(new TooManyComponentsScreen())));
-        panel.child(Components.button(Text.literal("focus cycle test"), button -> this.client.setScreen(new BaseUIModelScreen<>(FlowLayout.class, new Identifier("uwu", "focus_cycle_test")) {
+        panel.child(Components.button(Component.literal("code demo"), button -> this.minecraft.setScreen(new ComponentTestScreen())));
+        panel.child(Components.button(Component.literal("xml demo"), button -> this.minecraft.setScreen(new TestParseScreen())));
+        panel.child(Components.button(Component.literal("code config"), button -> this.minecraft.setScreen(new TestConfigScreen())));
+        panel.child(Components.button(Component.literal("xml config"), button -> this.minecraft.setScreen(ConfigScreen.create(Uwu.CONFIG, null))));
+        panel.child(Components.button(Component.literal("optimization test"), button -> this.minecraft.setScreen(new TooManyComponentsScreen())));
+        panel.child(Components.button(Component.literal("focus cycle test"), button -> this.minecraft.setScreen(new BaseUIModelScreen<>(FlowLayout.class, new ResourceLocation("uwu", "focus_cycle_test")) {
             @Override
             protected void build(FlowLayout rootComponent) {}
         })));
-        panel.child(Components.button(Text.literal("smolnite"), button -> this.client.setScreen(new SmolComponentTestScreen())));
-        panel.child(Components.button(Text.literal("sizenite"), button -> this.client.setScreen(new SizingTestScreen())));
+        panel.child(Components.button(Component.literal("smolnite"), button -> this.minecraft.setScreen(new SmolComponentTestScreen())));
+        panel.child(Components.button(Component.literal("sizenite"), button -> this.minecraft.setScreen(new SizingTestScreen())));
 
         this.uiAdapter.rootComponent.child(panel);
     }

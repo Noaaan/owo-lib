@@ -2,11 +2,9 @@ package io.wispforest.uwu.client;
 
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.component.Components;
-import io.wispforest.owo.ui.container.Containers;
-import io.wispforest.owo.ui.container.FlowLayout;
-import io.wispforest.owo.ui.container.StackLayout;
+import io.wispforest.owo.ui.container.*;
 import io.wispforest.owo.ui.core.*;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 public class SizingTestScreen extends BaseOwoScreen<FlowLayout> {
@@ -22,7 +20,7 @@ public class SizingTestScreen extends BaseOwoScreen<FlowLayout> {
             container.horizontalAlignment(HorizontalAlignment.CENTER).surface(Surface.panelWithInset(6)).padding(Insets.of(15));
 
             var animation = container.horizontalSizing().animate(500, Easing.CUBIC, Sizing.fill(75));
-            container.child(Components.button(Text.literal("initialize sizenite"), button -> {
+            container.child(Components.button(Component.literal("initialize sizenite"), button -> {
                 animation.reverse();
             }).horizontalSizing(Sizing.fill(50)));
         }));

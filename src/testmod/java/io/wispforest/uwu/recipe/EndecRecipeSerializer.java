@@ -3,11 +3,9 @@ package io.wispforest.uwu.recipe;
 import com.mojang.serialization.Codec;
 import io.wispforest.owo.serialization.Endec;
 import io.wispforest.owo.serialization.SerializationAttribute;
-import io.wispforest.owo.serialization.format.bytebuf.ByteBufDeserializer;
-import io.wispforest.owo.serialization.format.bytebuf.ByteBufSerializer;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 
 public class EndecRecipeSerializer<T extends Recipe<?>> implements RecipeSerializer<T> {
 
@@ -25,12 +23,12 @@ public class EndecRecipeSerializer<T extends Recipe<?>> implements RecipeSeriali
     }
 
     @Override
-    public void write(PacketByteBuf buf, T recipe) {
+    public void toNetwork(FriendlyByteBuf buf, T recipe) {
         buf.write(this.endec, recipe);
     }
 
     @Override
-    public T read(PacketByteBuf buf) {
+    public T fromNetwork(FriendlyByteBuf buf) {
         return buf.read(this.endec);
     }
 }

@@ -6,8 +6,7 @@ import io.wispforest.owo.registration.annotations.RegistryNamespace;
 import io.wispforest.owo.registration.reflect.ItemRegistryContainer;
 import io.wispforest.uwu.Uwu;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.Item;
-
+import net.minecraft.world.item.Item;
 import java.lang.reflect.Field;
 
 public class UwuItems implements ItemRegistryContainer {

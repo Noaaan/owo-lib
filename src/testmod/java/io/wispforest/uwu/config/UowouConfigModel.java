@@ -3,8 +3,7 @@ package io.wispforest.uwu.config;
 import io.wispforest.owo.config.Option;
 import io.wispforest.owo.config.annotation.*;
 import io.wispforest.owo.ui.core.Color;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.ResourceLocation;
 import java.util.Set;
 
 @Modmenu(modId = "fabric")
@@ -16,7 +15,7 @@ public class UowouConfigModel {
     public boolean thisIsNotSyncable = false;
 
     @Hook
-    public Identifier idPlease = new Identifier("uowou", "bruh");
+    public ResourceLocation idPlease = new ResourceLocation("uowou", "bruh");
 
     @Sync(Option.SyncMode.NONE)
     public Set<String> setPlease = Set.of("that's a value");

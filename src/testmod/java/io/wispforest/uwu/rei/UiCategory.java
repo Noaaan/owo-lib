@@ -17,16 +17,15 @@ import me.shedaniel.rei.api.common.display.Display;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.api.common.util.EntryStacks;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
 import java.util.Collections;
 import java.util.List;
 
 public class UiCategory implements DisplayCategory<Display> {
 
-    public static CategoryIdentifier<UiDisplay> ID = CategoryIdentifier.of(new Identifier("owo", "ui"));
+    public static CategoryIdentifier<UiDisplay> ID = CategoryIdentifier.of(new ResourceLocation("owo", "ui"));
 
     @Override
     public List<Widget> setupDisplay(Display display, Rectangle bounds) {
@@ -40,16 +39,16 @@ public class UiCategory implements DisplayCategory<Display> {
         var inner = Containers.verticalFlow(Sizing.fill(100), Sizing.content());
         inner.horizontalAlignment(HorizontalAlignment.CENTER).surface(Surface.flat(0xFF00FFAF));
 
-        inner.child(Components.label(Text.of("A demonstration\ninside REI"))
+        inner.child(Components.label(Component.nullToEmpty("A demonstration\ninside REI"))
                 .color(Color.BLACK)
                 .positioning(Positioning.absolute(3, 3))
         );
 
         var animation = inner.horizontalSizing().animate(250, Easing.QUADRATIC, Sizing.fill(65));
-        inner.child(Components.button(Text.of("shrink"), (ButtonComponent button) -> animation.forwards())
+        inner.child(Components.button(Component.nullToEmpty("shrink"), (ButtonComponent button) -> animation.forwards())
                 .margins(Insets.vertical(25))
                 .horizontalSizing(Sizing.fixed(60)));
-        inner.child(Components.button(Text.of("grow"), (ButtonComponent button) -> animation.backwards())
+        inner.child(Components.button(Component.nullToEmpty("grow"), (ButtonComponent button) -> animation.backwards())
                 .margins(Insets.vertical(25))
                 .horizontalSizing(Sizing.fixed(60)));
 
@@ -67,8 +66,8 @@ public class UiCategory implements DisplayCategory<Display> {
     }
 
     @Override
-    public Text getTitle() {
-        return Text.of("yes its gui very epic");
+    public Component getTitle() {
+        return Component.nullToEmpty("yes its gui very epic");
     }
 
     @Override

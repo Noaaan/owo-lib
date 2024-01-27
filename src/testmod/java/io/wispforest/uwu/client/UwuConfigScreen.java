@@ -5,8 +5,7 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.SliderComponent;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.core.Component;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-
+import net.minecraft.client.gui.components.EditBox;
 import java.util.Map;
 
 public class UwuConfigScreen extends BaseUIModelScreen<FlowLayout> {
@@ -36,9 +35,9 @@ public class UwuConfigScreen extends BaseUIModelScreen<FlowLayout> {
                 )
         );
 
-        var valueBox = option.childById(TextFieldWidget.class, "value-box");
+        var valueBox = option.childById(EditBox.class, "value-box");
         option.childById(ButtonComponent.class, "reset-button").onPress(button -> {
-            valueBox.setText(String.valueOf(index * index));
+            valueBox.setValue(String.valueOf(index * index));
         });
 
         return option;
